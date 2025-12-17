@@ -1,6 +1,7 @@
 ﻿using Nass.Models;
 using System.Text.Json.Serialization;
 
+
 public partial class Transaction
 {
     public int TransId { get; set; }
@@ -14,12 +15,13 @@ public partial class Transaction
     public int? AgencyId { get; set; }
     public DateTime? TransRecivedDate { get; set; }
     public int TransMaxAgency { get; set; }
-    public string TransStatus { get; set; } = null!;
+
     public string? AgencyTenat { get; set; }
+
+    public virtual Customer? Customer { get; set; }
 
     [JsonIgnore]
     public virtual Agency? Agency { get; set; }
 
-    [JsonIgnore]
-    public virtual Customer Customer { get; set; } = null!;
+    public string? TransStatus { get; set; }
 }

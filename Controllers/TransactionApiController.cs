@@ -143,5 +143,20 @@ namespace Nass.Controllers
 
             return NoContent();
         }
+
+        ////Filter Transactions by Tenet
+        //[HttpGet]
+        //public async Task<IActionResult> GetTransactions([FromQuery] string? tenat)
+        //{
+        //    var query = _context.Transactions.AsQueryable();
+
+        //    if (!string.IsNullOrEmpty(tenat))
+        //    {
+        //        query = query.Where(t => t.AgencyTenat == tenat);
+        //    }
+
+        //    var result = await query.ToListAsync();
+        //    return Ok(result);
+        //}
     }
 }

@@ -1,8 +1,244 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    Layout = null;
+    ViewData["Title"] = "Login";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ff4500, #ff4500);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .login-card {
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+        }
+
+        .login-title {
+            font-weight: 600;
+        }
+
+        .form-control {
+            height: 48px;
+            border-radius: 10px;
+        }
+
+        .btn-login {
+            height: 48px;
+            border-radius: 10px;
+            background-color: orange;
+            color: white;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+            .btn-login:hover {
+                background-color: #5a0fcc;
+            }
+
+        .btn-agency {
+            background-color: #6610f2;
+            color: white;
+            font-weight: 500;
+            border-radius: 12px;
+            transition: background 0.3s;
+        }
+
+            .btn-agency:hover {
+                background-color: #5208c0;
+            }
+
+        .btn-customer {
+            background-color: #0d6efd;
+            color: white;
+            font-weight: 500;
+            border-radius: 12px;
+            transition: background 0.3s;
+        }
+
+            .btn-customer:hover {
+                background-color: #0a58ca;
+            }
+
+        @@media (max-width: 576px) {
+            .login-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="card login-card">
+            <h3 class="text-center login-title mb-4">LOGIN</h3>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label class="form-label">Tenat ID</label>
+                    <input type="text" id="tenat" class="form-control" placeholder="Tenat ID" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••" required />
+                </div>
+
+                <div class="d-grid gap-3 mt-3 mb-3">
+                    <button type="button" class="btn btn-agency btn-lg w-100" onclick="login('Agency')">Login as Agency</button>
+                    <button type="button" class="btn btn-customer btn-lg w-100" onclick="login('Customer')">Login as Customer</button>
+
+                </div>
+            </form>
+
+            <div id="alertContainer"></div>
+        </div>
+    </div>
+    <script>
+        async function login(userType) {
+            const tenat = document.getElementById('tenat').value;
+            const password = document.getElementById('password').value;
+
+            if (!tenat || !password) {
+                showAlert('Please enter tenat and password', 'warning');
+                return;
+            }
+
+            // Determine API URL based on user type
+            const apiUrl = userType === 'Agency' ? '/api/agencylogin' : '/api/customerlogin';
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tenat, password, userType }) // ✅ send correct keys
+                });
+
+                // Make sure API returns JSON
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Success: store info in localStorage
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('tenat', data.tenat);
+                    localStorage.setItem('userType', data.role);
+
+                    showAlert(data.message, 'success');
+
+                    // Redirect to dashboard after 500ms
+                    setTimeout(() => {
+                        window.location.href = '/Home/Dashboard';
+                    }, 500);
+                } else {
+                    showAlert(data.message || 'Invalid credentials', 'danger');
+                }
+            } catch (err) {
+                console.error(err);
+                showAlert('Server error, please try again later', 'danger');
+            }
+        }
+
+        // Show Bootstrap alert
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            container.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show mt-3" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>`;
+        }
+    </script>
+
+    @* test JWT *@
+    <script>
+        // Suppose token is stored after login
+        localStorage.setItem('token', 'YOUR_JWT_TOKEN_HERE');
+
+        // 1️⃣ Read token
+        const token = localStorage.getItem('token');
+        console.log("JWT Token:", token);
+
+        // 2️⃣ Decode payload
+        function parseJwt(token) {
+            try {
+                const base64Payload = token.split('.')[1];
+                const payload = atob(base64Payload);
+                return JSON.parse(payload);
+            } catch {
+                return null;
+            }
+        }
+
+        // 3️⃣ Print decoded payload
+        const payload = parseJwt(token);
+        console.log("Decoded JWT payload:", payload);
+
+        // 4️⃣ Simple validity check
+        if (payload && payload.exp * 1000 > Date.now()) {
+            console.log("Token is valid ✅");
+        } else {
+            console.log("Token missing or expired ❌");
+        }
+    </script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const tenat = localStorage.getItem('tenat');
+            const userType = localStorage.getItem('userType');
+
+            if (token) {
+                showPopup(`Welcome back ${tenat} (${userType})! 🎉 Token found.`);
+            }
+        });
+
+        // Simple popup function
+        function showPopup(message) {
+            const popup = document.createElement('div');
+            popup.style.position = 'fixed';
+            popup.style.top = '20px';
+            popup.style.right = '20px';
+            popup.style.padding = '15px 25px';
+            popup.style.backgroundColor = '#6610f2'; // Gladiator purple
+            popup.style.color = 'white';
+            popup.style.fontWeight = '500';
+            popup.style.borderRadius = '10px';
+            popup.style.boxShadow = '0 4px 10px rgba(0,0,0,0.25)';
+            popup.style.zIndex = 9999;
+            popup.style.opacity = 0;
+            popup.style.transition = 'opacity 0.5s';
+
+            popup.innerText = message;
+            document.body.appendChild(popup);
+
+            // Fade in
+            setTimeout(() => popup.style.opacity = 1, 50);
+
+            // Fade out and remove after 3 seconds
+            setTimeout(() => {
+                popup.style.opacity = 0;
+                setTimeout(() => popup.remove(), 500);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
