@@ -51,21 +51,6 @@ This platform allows:
 
 ## Database Structure (Initial)
 
-### Categories Table
-
-* Category_id, Category_name, Category_status, Category_created
-
-### Agency Table
-
-* Agency_id, Agency_name, Agency_phone, Agency_email, Agency_website, Agency_address, Agency_location, Agency_tax_id, Agency_tenant, Agency_username, Agency_password, Agency_joined_date, Agency_logo, Agency_uid
-
-### Customer Table
-
-* Customer_id, Customer_name, Customer_phone, Customer_email, Customer_address, Customer_location, Customer_tax_id, Customer_tenant, Customer_username, Customer_password, Customer_joined_date, Customer_uid
-
-### Transactions Table
-
-* Trans_id, Trans_uid, Customer_id, Trans_date, Trans_blob_attachment, Trans_url_attachment, Trans_categories, Trans_description, Agency_id, Trans_received_date, Trans_max_agency, Trans_status, Agency_tenant
 
 ---
 
