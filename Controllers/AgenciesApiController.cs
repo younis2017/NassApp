@@ -59,7 +59,7 @@ namespace Nass.Controllers
         // POST (Create)
         // =========================
         [HttpPost]
-        public async Task<IActionResult> Create(Agency agency)
+        public async Task<IActionResult> Create(Agencies agency)
         {
             agency.AgencyJoinedDate = DateTime.UtcNow;
             agency.AgencyUid = Guid.NewGuid();
@@ -76,7 +76,7 @@ namespace Nass.Controllers
         // PUT (Update)
         // =========================
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Agency agency)
+        public async Task<IActionResult> Update(int id, Agencies agency)
         {
             if (id != agency.AgencyId)
                 return BadRequest("Agency ID mismatch");
@@ -136,6 +136,41 @@ namespace Nass.Controllers
                 agency.AgencyName,
                 agency.AgencyEmail,
                 agency.AgencyUid
+            });
+        }
+
+        // agency dashboard
+        [HttpGet("agency")]
+        public async Task<IActionResult> GetAgencyDashboard([FromQuery] string tenant)
+        {
+            if (string.IsNullOrEmpty(tenant))
+                return BadRequest("Tenant is required");
+
+            var today = DateTime.Today;
+
+            var query = _context.Transactions
+                .Where(t => t.Agency_tenat == tenant);
+
+            var totalOrders = await query.CountAsync();
+
+            var newOrdersToday = await query
+                .Where(t => t.Trans_date >= today)
+                .CountAsync();
+
+            var pendingOrders = await query
+                .Where(t => t.TransStatus == 0)
+                .CountAsync();
+
+            var confirmedOrders = await query
+                .Where(t => t.TransStatus == 1)
+                .CountAsync();
+
+            return Ok(new
+            {
+                totalOrders,
+                newOrdersToday,
+                pendingOrders,
+                confirmedOrders
             });
         }
     }

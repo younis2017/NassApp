@@ -138,5 +138,36 @@ namespace Nass.Controllers
                 customer.CustomerUid
             });
         }
+
+        // CustomersKPI Controller
+        [HttpGet("customer")]
+        public async Task<IActionResult> GetCustomerDashboard([FromQuery] string tenant)
+        {
+            if (string.IsNullOrWhiteSpace(tenant))
+                return BadRequest("Tenant is required");
+
+            var today = DateTime.Today;
+
+            var baseQuery = _context.Transactions
+                .Where(t => t.Customer.CustomerTenet == tenant);
+
+            return Ok(new
+            {
+                totalOrders = await baseQuery.CountAsync(),
+
+                newOrdersToday = await baseQuery
+                    .Where(t => t.Trans_date >= today)
+                    .CountAsync(),
+
+                pendingOrders = await baseQuery
+                    .Where(t => t.TransStatus == 0)
+                    .CountAsync(),
+
+                confirmedOrders = await baseQuery
+                    .Where(t => t.TransStatus == 1)
+                    .CountAsync()
+            });
+        }
+
     }
 }

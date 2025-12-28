@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Nass.Data;
 using Nass.Helpers;
-using Nass.Models;
 using System.Text.Json;
 
 namespace Nass.Controllers

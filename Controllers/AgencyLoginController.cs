@@ -1,76 +1,96 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Nass.Data;
 using Nass.Helpers;
 using Nass.Models;
-using System.Text.Json;
+using System;
+using System.Threading.Tasks;
 
 namespace Nass.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
-    public class AgencyLoginController : ControllerBase
+    [Route("api/[controller]")]
+    public class LoginController : ControllerBase
     {
         private readonly NassadContext _context;
         private readonly JwtService _jwt;
-       
 
-        public AgencyLoginController(NassadContext context, JwtService jwt)
+        public LoginController(NassadContext context, JwtService jwt)
         {
             _context = context;
             _jwt = jwt;
         }
 
-        [HttpPost]
-        // Example: AgencyLoginController
-        [HttpPost]
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] JsonElement data)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
         {
-            try
+            if (string.IsNullOrWhiteSpace(dto.Tenat) ||
+                string.IsNullOrWhiteSpace(dto.Password) ||
+                string.IsNullOrWhiteSpace(dto.UserType))
             {
-                if (!data.TryGetProperty("tenat", out var tenatElem) ||
-                    !data.TryGetProperty("password", out var passwordElem) ||
-                    !data.TryGetProperty("userType", out var userTypeElem))
+                return BadRequest(new
                 {
-                    return BadRequest(new { success = false, message = "Username, password or userType missing" });
-                }
-
-                string tenat = tenatElem.GetString()!;
-                string password = passwordElem.GetString()!;
-                string userType = userTypeElem.GetString()!;
-
-                if (userType == "Customer")
-                {
-                    var customer = await _context.Customers
-                        .FirstOrDefaultAsync(c => c.CustomerTenet == tenat && c.CustomerPassword == password);
-
-                    if (customer != null)
-                    {
-                        var token = _jwt.GenerateToken(tenat, "Customer");
-                        return Ok(new { success = true, message = $"Customer {tenat} login successful", token, tenat, role = "Customer" });
-                    }
-                    return Unauthorized(new { success = false, message = "Invalid Customer credentials" });
-                }
-                else if (userType == "Agency")
-                {
-                    var agency = await _context.Agencies
-                        .FirstOrDefaultAsync(a => a.AgencyTenet == tenat && a.AgencyPassword == password);
-
-                    if (agency != null)
-                    {
-                        var token = _jwt.GenerateToken(tenat, "Agency");
-                        return Ok(new { success = true, message = $"Agency {tenat} login successful", token, tenat, role = "Agency" });
-                    }
-                    return Unauthorized(new { success = false, message = "Invalid Agency credentials" });
-                }
-
-                return BadRequest(new { success = false, message = "Invalid userType" });
+                    success = false,
+                    message = "Tenat, password or userType missing"
+                });
             }
-            catch (Exception ex)
+
+            if (dto.UserType == "Agency")
             {
-                return StatusCode(500, new { success = false, message = ex.Message });
+                var agency = await _context.Agencies
+                    .FirstOrDefaultAsync(a =>
+                        a.AgencyTenet == dto.Tenat &&
+                        a.AgencyPassword == dto.Password);
+
+                if (agency == null)
+                    return Unauthorized(new { success = false, message = "Invalid agency credentials" });
+
+                var token = _jwt.GenerateToken(agency.AgencyUid.ToString(), "Agency");
+
+                return Ok(new
+                {
+                    success = true,
+                    token,
+                    role = "Agency",
+                    tenat = agency.AgencyTenet,
+                    message = "Agency login successful"
+                });
             }
+
+            if (dto.UserType == "Customer")
+            {
+                var customer = await _context.Customers
+                    .FirstOrDefaultAsync(c =>
+                        c.CustomerTenet == dto.Tenat &&
+                        c.CustomerPassword == dto.Password);
+
+                if (customer == null)
+                    return Unauthorized(new { success = false, message = "Invalid customer credentials" });
+
+                var token = _jwt.GenerateToken(customer.CustomerUid.ToString(), "Customer");
+
+                return Ok(new
+                {
+                    success = true,
+                    token,
+                    role = "Customer",
+                    tenat = customer.CustomerTenet,
+                    message = "Customer login successful"
+                });
+            }
+
+            return BadRequest(new
+            {
+                success = false,
+                message = "Invalid userType"
+            });
         }
-
     }
+    public class LoginRequestDto
+    {
+        public string Tenat { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string UserType { get; set; } = string.Empty; // Agency | Customer
+    }
+
 }

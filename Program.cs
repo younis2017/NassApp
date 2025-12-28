@@ -3,23 +3,38 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Nass.Data;
 using Nass.Helpers;
-using Nass.Models;
+using Nass.Hubs;
+using Nass.Services.Email;
+using Nass.Services.SMS;
 using System.Text;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // =======================
 // SERVICES
 // =======================
+//signalR 
+builder.Services.AddSignalR();
+
+//customer service
+builder.Services.AddScoped<ICustomerTenetService, CustomerTenetService>();
 
 // MVC + API
 builder.Services.AddControllersWithViews();
-builder.Services.AddControllers();
-builder.Services.AddSingleton<JwtService>();
 
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.ReferenceHandler =
+        System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
+    );
+// JWT Token
+builder.Services.AddSingleton<JwtService>();
+//TwilioSmsService
+builder.Services.AddSingleton<TwilioSmsService>();
 // EF Core
 builder.Services.AddDbContext<NassadContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AzureConnection"))
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SQLConnection"))
 );
 
 // Swagger
@@ -58,14 +73,19 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+//EMAIL SERVICE and SMS SERVICE
+builder.Services.AddScoped<IEmailService<EmailService>, EmailService>();
 
+builder.Services.AddScoped<ISmsService, SmsService>();
+builder.Services.AddScoped<NotificationService>();
 // =======================
 // BUILD APP
 // =======================
 
 var app = builder.Build();
 
-
+//temp for debug developer 
+app.UseDeveloperExceptionPage();
 // =======================
 // MIDDLEWARE
 // =======================
@@ -94,7 +114,10 @@ app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}"
+    pattern: "{controller=Home}/{action=index}/{id?}"
 );
+
+
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();

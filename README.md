@@ -1,4 +1,4 @@
-# NASSAD Advertising & Printing Platform
+﻿# NASSAD Advertising & Printing Platform
 
 ## Overview
 
@@ -10,6 +10,11 @@ This platform allows:
 * Automatic distribution of orders to registered agencies
 * Real-time notifications via dashboard, email, and SMS
 * First-come, first-served order acceptance
+## Database Relationship Diagram
+Customer 1 → Many Transactions
+Transaction 1 → 1 Notification
+Notification 1 → Many NotificationRecipients
+Agency 1 → Many NotificationRecipients
 
 ---
 

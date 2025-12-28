@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Nass.Data;
 
@@ -11,9 +12,11 @@ using Nass.Data;
 namespace Nass.Migrations
 {
     [DbContext(typeof(NassadContext))]
-    partial class NassadContextModelSnapshot : ModelSnapshot
+    [Migration("20251226115906_AddAgencyAndCustomerStatus")]
+    partial class AddAgencyAndCustomerStatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -56,7 +59,7 @@ namespace Nass.Migrations
                     b.Property<string>("AgencyPhone")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("AgencyStatus")
+                    b.Property<int?>("AgencyStatus")
                         .HasColumnType("int");
 
                     b.Property<string>("AgencyTaxId")
@@ -136,7 +139,7 @@ namespace Nass.Migrations
                     b.Property<string>("CustomerPhone")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("CustomerStatus")
+                    b.Property<int?>("CustomerStatus")
                         .HasColumnType("int");
 
                     b.Property<string>("CustomerTaxId")

@@ -95,7 +95,6 @@
             flex-grow: 1;
             padding: 2rem;
         }
-
         @@media (max-width: 768px) {
             .sidebar
 
@@ -113,6 +112,15 @@
         }
 
         }
+
+        .section {
+            display: none;
+        }
+
+            .section.active {
+                display: block;
+            }
+
     </style>
 </head>
 <body>
@@ -133,108 +141,514 @@
                     <div class="logo">Nassad</div>
                 </div>
                 <div class="d-flex align-items-center">
-                    <span class="me-3 welcome-text">Welcome</span>
-                    <div class="notifications me-3" id="notificationIcon">
-                        <i class="bi bi-bell fs-4"></i>
-                        <span class="badge rounded-pill bg-danger">3</span>
+                    <span class="me-3 welcome-text">Welcome @ViewBag.AgencyName</span>
+                    <div class="notifications me-3 position-relative" id="notificationWrapper">
+                        <i class="bi bi-bell fs-4" id="notificationIcon" style="cursor: pointer;"></i>
+                        <span class="badge rounded-pill bg-danger" id="notificationCount">0</span>
+                        <ul class="dropdown-menu shadow" id="notificationList"
+                            style="width: 300px; max-height: 400px; overflow-y: auto; display: none; position: absolute; top: 30px; right: 0;">
+                            <li class="dropdown-item text-center text-muted">Loading notifications...</li>
+                        </ul>
                     </div>
-                    <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button>
+                    @* <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button> *@
                 </div>
             </header>
 
             <div class="content-area">
-                <h2>Dashboard</h2>
-                <p>Add your dashboard widgets, charts, and activity here.</p>
+
+                <!-- DASHBOARD SECTION -->
+                <section id="dashboardSection" class="section active">
+                    <div class="row g-4" id="agencyKpis">
+                        <div class="col-md-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="text-muted">New Orders Today</h6>
+                                    <h3 id="kpiNewToday" class="text-primary">0</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="text-muted">Pending Orders</h6>
+                                    <h3 id="kpiPending" class="text-warning">0</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="text-muted">Confirmed Orders</h6>
+                                    <h3 id="kpiConfirmed" class="text-success">0</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="text-muted">Total Orders</h6>
+                                    <h3 id="kpiTotal" class="text-dark">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ORDERS SECTION -->
+                <section id="ordersSection" class="section">
+                    <h4 class="mb-3">Orders</h4>
+
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+
+                            <!-- Orders Table -->
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Order ID</th>
+                                            <th>Customer</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ordersTableBody">
+                                        <!-- Rows populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            <nav aria-label="Orders pagination">
+                                <ul class="pagination justify-content-end" id="ordersPagination">
+                                    <!-- Pagination populated via JS -->
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ORDER DETAILS MODAL -->
+                <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Order Details</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body" id="orderDetailsBody">
+                                Loading...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SETTINGS SECTION -->
+                <section id="settingsSection" class="section">
+                    <h4 class="mb-3">Settings</h4>
+
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="mb-3">Profile Information</h5>
+                            <form id="profileForm">
+                                <div class="mb-3">
+                                    <label for="profileName" class="form-label">Name</label>
+                                    <input type="text" class="form-control" id="profileName" placeholder="Enter your name">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="profileEmail" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="profileEmail" placeholder="Enter your email">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Update Profile</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="mb-3">Change Password</h5>
+                            <form id="passwordForm">
+                                <div class="mb-3">
+                                    <label for="currentPassword" class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" id="currentPassword" placeholder="Current password">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="newPassword" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="newPassword" placeholder="New password">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm new password">
+                                </div>
+                                <button type="submit" class="btn btn-warning">Change Password</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="mb-3">Preferences</h5>
+                            <form id="preferencesForm">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" value="" id="prefEmailNotifications">
+                                    <label class="form-check-label" for="prefEmailNotifications">
+                                        Enable Email Notifications
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" value="" id="prefDarkMode">
+                                    <label class="form-check-label" for="prefDarkMode">
+                                        Enable Dark Mode
+                                    </label>
+                                </div>
+                                <button type="submit" class="btn btn-success">Save Preferences</button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+
             </div>
+
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.7/signalr.min.js"></script>
+
     <script>
-        // Load user info from localStorage
-        const tenat = localStorage.getItem('tenat');
-        const userType = localStorage.getItem('userType');
+        const tenant = localStorage.getItem("tenant");
+        const userType = localStorage.getItem("userType");
 
-        const roleHeader = document.getElementById('roleHeader');
-        const welcomeText = document.querySelector('.welcome-text');
-        const sidebarLinks = document.getElementById('sidebarLinks');
-        const notificationIcon = document.getElementById('notificationIcon');
+        const roleHeader = document.getElementById("roleHeader");
+        const welcomeText = document.querySelector(".welcome-text");
+        const sidebarLinks = document.getElementById("sidebarLinks");
+        const notificationWrapper = document.getElementById("notificationWrapper");
+        const notificationIcon = document.getElementById("notificationIcon");
+        const notificationCount = document.getElementById("notificationCount");
+        const notificationList = document.getElementById("notificationList");
 
-        if (tenat && userType) {
-            roleHeader.textContent = `${userType}: ${tenat}`;
-            welcomeText.textContent = `Welcome, ${tenat} (${userType})`;
+        // ===============================
+        // HEADER & SIDEBAR
+        // ===============================
+        if (tenant && userType) {
+            roleHeader.textContent = `${userType}: ${tenant}`;
+            welcomeText.textContent = `Welcome, ${tenant} (${userType})`;
         }
 
-        // Sidebar links by role
         const linksCustomer = [
-            { icon: 'bi-speedometer2', text: 'Dashboard', href: '#' },
-            { icon: 'bi-card-checklist', text: 'Orders', href: '#' },
-            { icon: 'bi-gear', text: 'Settings', href: '#' },
-            { icon: 'bi-box-arrow-right', text: 'Logout', href: '#', logout: true }
+            { icon: "bi-speedometer2", text: "Dashboard" },
+            { icon: "bi-card-checklist", text: "Orders" },
+            { icon: "bi-gear", text: "Settings" },
+            { icon: "bi-box-arrow-right", text: "Logout", logout: true }
         ];
 
         const linksAgency = [
-            { icon: 'bi-speedometer2', text: 'Dashboard', href: '#' },
-            { icon: 'bi-bell', text: 'Notifications', href: '#' },
-            { icon: 'bi-card-checklist', text: 'Orders', href: '#' },
-            { icon: 'bi-gear', text: 'Settings', href: '#' },
-            { icon: 'bi-box-arrow-right', text: 'Logout', href: '#', logout: true }
+            { icon: "bi-speedometer2", text: "Dashboard" },
+            // { icon: "bi-bell", text: "Notifications" },
+            { icon: "bi-card-checklist", text: "Orders" },
+            { icon: "bi-gear", text: "Settings" },
+            { icon: "bi-box-arrow-right", text: "Logout", logout: true }
         ];
 
-        const links = userType === 'Agency' ? linksAgency : linksCustomer;
+        const links = userType === "Agency" ? linksAgency : linksCustomer;
+               sidebarLinks.innerHTML = links.map(l => {
+            if (l.logout) {
+                return `<a href="#" onclick="logout()"><i class="bi ${l.icon} me-2"></i>${l.text}</a>`;
+            } else {
+                // Map text to section ID
+                let sectionId = "";
+                switch (l.text.toLowerCase()) {
+                    case "dashboard": sectionId = "dashboardSection"; break;
+                    case "orders": sectionId = "ordersSection"; break;
+                    case "settings": sectionId = "settingsSection"; break;
+                }
+                return `<a href="#" data-section="${sectionId}"><i class="bi ${l.icon} me-2"></i>${l.text}</a>`;
+            }
+        }).join("");
+                sidebarLinks.addEventListener("click", e => {
+            const link = e.target.closest("[data-section]");
+            if (!link) return;
+            e.preventDefault();
 
-        sidebarLinks.innerHTML = links.map(l => {
-            if (l.logout) return `<a href="#" onclick="logout()"><i class="bi ${l.icon} me-2"></i>${l.text}</a>`;
-            return `<a href="${l.href}"><i class="bi ${l.icon} me-2"></i>${l.text}</a>`;
-        }).join('');
+            document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+            document.getElementById(link.dataset.section)?.classList.add("active");
 
-        if(userType === 'Customer') notificationIcon.style.display = 'none';
+            if (window.innerWidth <= 768) sidebar.classList.remove("show"); // mobile
+        });
 
-        // Logout function
-        function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('tenat');
-            localStorage.removeItem('userType');
-            window.location.href = '/';
+
+        // ===============================
+        // LOGOUT
+        // ===============================
+                function logout() {
+            // Remove only auth-related data
+            localStorage.removeItem("tenant");
+            localStorage.removeItem("userType");
+            localStorage.removeItem("token"); // if you have one
+
+            // Redirect to Login page
+            window.location.href = "/home/Login"; // adjust if needed
+        }
+                if (!localStorage.getItem("tenant")) { // return to login screen if the tenant is empty in localstorage
+            window.location.href = "/home/Login";
+        }
+        document.getElementById("logoutBtn")?.addEventListener("click", logout);
+
+        // ===============================
+        // SIDEBAR TOGGLE (MOBILE)
+        // ===============================
+        const sidebar = document.getElementById("sidebar");
+        const toggleBtn = document.getElementById("menuToggle");
+        toggleBtn?.addEventListener("click", () => sidebar.classList.toggle("show"));
+
+        // ===============================
+        // NOTIFICATIONS (AGENCY ONLY)
+        // ===============================
+        if (userType === "Agency") {
+            initNotifications();
+        } else {
+            notificationWrapper.style.display = "none";
         }
 
-        document.getElementById('logoutBtn').addEventListener('click', logout);
+        function initNotifications() {
+            const audio = new Audio("/Sounds/notification.mp3");
+            audio.volume = 0.6;
+            notificationIcon.addEventListener("click", () => {
+                notificationList.style.display = notificationList.style.display === "block" ? "none" : "block";
+            });
 
-        // Sidebar toggle
-        const sidebar = document.getElementById('sidebar');
-        const toggleBtn = document.getElementById('menuToggle');
-        toggleBtn.addEventListener('click', () => sidebar.classList.toggle('show'));
+            async function renderNotifications(playSound = false) {
+                try {
+                    const res = await fetch(`/api/notifications/all`);
+                    if (!res.ok) return;
 
-        document.addEventListener('click', e => {
-            if (window.innerWidth <= 768 &&
+                    const transactions = await res.json();
+                    notificationList.innerHTML = "";
+                    notificationCount.textContent = transactions.length;
+
+                    if (!transactions.length) {
+                        notificationList.innerHTML = `<li class="dropdown-item text-center text-muted">No notifications</li>`;
+
+                        return;
+                    }
+
+      
+                            transactions.forEach(t => {
+            const li = document.createElement("li");
+            li.className = "dropdown-item p-2 border-bottom";
+            li.innerHTML = `
+                <strong>${t.trans_categories}</strong>
+                <small class="text-muted d-block">${new Date(t.trans_date).toLocaleString()}</small>
+                <div>${t.trans_description}</div>
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-success me-1" data-id="${t.trans_id}" data-action="confirm">✔ Confirm</button>
+                    <button class="btn btn-sm btn-danger" data-id="${t.trans_id}" data-action="reject">✖ Reject</button>
+                </div>
+            `;
+            notificationList.appendChild(li);
+        });
+
+
+                    if (playSound) audio.play().catch(() => {});
+                } catch (err) {
+                    console.error("Notification error:", err);
+                }
+            }
+
+            renderNotifications();
+
+            // SignalR connection
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl(`/notificationHub?tenant=${tenant}`)
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("ReceiveNotification", () => renderNotifications(true));
+            connection.start().then(() => console.log("SignalR connected"))
+                .catch(err => console.error(err));
+
+            // Confirm / Reject actions
+            notificationList.addEventListener("click", async (e) => {
+                if (e.target.tagName !== "BUTTON") return;
+
+                const id = e.target.dataset.id;
+                const action = e.target.dataset.action;
+                const url = action === "confirm"
+                    ? `/api/notifications/confirm/${id}?tenant=${tenant}`
+                    : `/api/notifications/reject/${id}?tenant=${tenant}`;
+
+                try {
+                    const res = await fetch(url, { method: "PUT" });
+                    if (!res.ok) {
+                        const errData = await res.json();
+                        alert(errData.message || "Action failed");
+                        return;
+                    }
+
+                    // Remove from list and update count
+                    e.target.closest("li").remove();
+                    notificationCount.textContent = notificationList.children.length;
+                } catch (err) {
+                    console.error(err);
+                    alert("Server error while updating notification");
+                }
+            });
+
+            // Refresh notifications every 15 seconds
+            setInterval(() => renderNotifications(false), 15000);
+        }
+             // Close sidebar when clicking outside
+        document.addEventListener("click", (e) => {
+            if (
+                window.innerWidth <= 768 &&
+                sidebar.classList.contains("show") &&
                 !sidebar.contains(e.target) &&
-                !toggleBtn.contains(e.target)) {
-                sidebar.classList.remove('show');
+                !toggleBtn.contains(e.target)
+            ) {
+                sidebar.classList.remove("show");
             }
         });
 
-        // JWT popup
-        const token = localStorage.getItem('token');
-        if (token) showPopup(`Welcome back ${tenat} (${userType})! 🎉 Token found.`);
-
-        function showPopup(message) {
-            const popup = document.createElement('div');
-            popup.style.position = 'fixed';
-            popup.style.top = '20px';
-            popup.style.right = '20px';
-            popup.style.padding = '15px 25px';
-            popup.style.backgroundColor = '#6610f2';
-            popup.style.color = 'white';
-            popup.style.fontWeight = '500';
-            popup.style.borderRadius = '10px';
-            popup.style.boxShadow = '0 4px 10px rgba(0,0,0,0.25)';
-            popup.style.zIndex = 9999;
-            popup.style.opacity = 0;
-            popup.style.transition = 'opacity 0.5s';
-            popup.innerText = message;
-            document.body.appendChild(popup);
-            setTimeout(() => popup.style.opacity = 1, 50);
-            setTimeout(() => { popup.style.opacity = 0; setTimeout(() => popup.remove(), 500); }, 3000);
+                       if (userType === "Agency") {
+            loadAgencyKpis();
+        } else if (userType === "Customer") {
+            loadCustomerKpis();
         }
+
+        //load kpi agency
+        async function loadAgencyKpis() {
+            try {
+                const res = await fetch(`/api/AgenciesApi/agency?tenant=${tenant}`);
+                if (!res.ok) return;
+
+                const data = await res.json();
+
+                document.getElementById("kpiNewToday").textContent = data.newOrdersToday;
+                document.getElementById("kpiPending").textContent = data.pendingOrders;
+                document.getElementById("kpiConfirmed").textContent = data.confirmedOrders;
+                document.getElementById("kpiTotal").textContent = data.totalOrders;
+
+            } catch (err) {
+                console.error("Failed to load KPIs", err);
+            }
+        }
+        //load kpi customer
+                async function loadCustomerKpis() {
+            try {
+                const res = await fetch(`/api/CustomersApi/customer?tenant=${tenant}`);
+                if (!res.ok) return;
+
+                const data = await res.json();
+
+                document.getElementById("kpiNewToday").textContent = data.newOrdersToday;
+                document.getElementById("kpiPending").textContent = data.pendingOrders;
+                document.getElementById("kpiConfirmed").textContent = data.confirmedOrders;
+                document.getElementById("kpiTotal").textContent = data.totalOrders;
+
+            } catch (err) {
+                console.error("Failed to load Customer KPIs", err);
+            }
+        }
+        // orders table for agency / customer
+        const ordersTableBody = document.getElementById("ordersTableBody");
+        const ordersPagination = document.getElementById("ordersPagination");
+     
+        let currentPage = 1;
+        const pageSize = 10;
+
+        // Load orders initially
+        loadOrders(currentPage);
+
+        async function loadOrders(page = 1) {
+            try {
+                const res = await fetch(`/api/orders?tenant=${tenant}&userType=${userType}&page=${page}&pageSize=${pageSize}`);
+                if (!res.ok) throw new Error("Failed to fetch orders");
+                const data = await res.json();
+
+                ordersTableBody.innerHTML = "";
+                data.items.forEach((order, i) => {
+                    ordersTableBody.innerHTML += `
+                        <tr>
+                            <td>${(page - 1) * pageSize + i + 1}</td>
+                            <td>${order.trans_id}</td>
+                            <td>${order.customerName}</td>
+                            <td>${new Date(order.transDate).toLocaleString()}</td>
+                            <td>
+                                <span class="badge ${order.transStatus === 1 ? 'bg-success' : 'bg-warning text-dark'}">
+                                    ${order.transStatus === 1 ? 'Confirmed' : 'Pending'}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="viewOrderDetails(${order.trans_id})">
+                                    Details
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                renderPagination(data.totalPages, page);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+
+
+        function renderPagination(totalPages, current) {
+            ordersPagination.innerHTML = "";
+
+            for (let i = 1; i <= totalPages; i++) {
+                ordersPagination.innerHTML += `
+                    <li class="page-item ${i === current ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="loadOrders(${i})">${i}</a>
+                    </li>
+                `;
+            }
+        }
+
+              // Show order details in modal
+                async function viewOrderDetails(transId) {
+            const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+            const body = document.getElementById('orderDetailsBody');
+            body.innerHTML = "Loading...";
+
+            try {
+              const res = await fetch(`/api/orders/details/${transId}?tenant=${tenant}&userType=${userType}`);
+
+                if (!res.ok) throw new Error("Failed to fetch order details");
+                const order = await res.json();
+
+                body.innerHTML = `
+                    <p><strong>Order ID:</strong> ${order.trans_id}</p>
+                    <p><strong>Customer:</strong> ${order.customerName}</p>
+                    <p><strong>Date:</strong> ${new Date(order.transDate).toLocaleString()}</p>
+                    <p><strong>Status:</strong> ${order.transStatus === 1 ? 'Confirmed' : 'Pending'}</p>
+                    <p><strong>Category:</strong> ${order.trans_categories}</p>
+                    <p><strong>Description:</strong> ${order.trans_description}</p>
+                                   <p>
+          <strong>URL:</strong>
+          <a href="${order.trans_url}" target="_blank">
+            ${order.trans_url}
+          </a>
+        </p>
+
+                `;
+
+                modal.show();
+            } catch (err) {
+                body.innerHTML = "Failed to load order details.";
+                console.error(err);
+            }
+        }
+
+
     </script>
+
 </body>
 </html>
