@@ -8,43 +8,54 @@ using Nass.Services.Email;
 using Nass.Services.SMS;
 using System.Text;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 // =======================
 // SERVICES
 // =======================
-//signalR 
+
+// SignalR
 builder.Services.AddSignalR();
 
-//customer service
+// Customer service
 builder.Services.AddScoped<ICustomerTenetService, CustomerTenetService>();
 
 // MVC + API
 builder.Services.AddControllersWithViews();
-
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
         options.JsonSerializerOptions.ReferenceHandler =
         System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
     );
+     //developer mode only 
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowAll",
+//        policy => policy.AllowAnyOrigin()
+//                        .AllowAnyHeader()
+//                        .AllowAnyMethod());
+//});
+
 // JWT Token
 builder.Services.AddSingleton<JwtService>();
-//TwilioSmsService
+
+// Twilio SMS Service
 builder.Services.AddSingleton<TwilioSmsService>();
+
 // EF Core
 builder.Services.AddDbContext<NassadContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SQLConnection"))
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("monsteraspConnection"),
+         //builder.Configuration.GetConnectionString("SQLConnection"),
+        sqlOptions => sqlOptions.EnableRetryOnFailure() // transient retry
+    )
 );
 
-// Swagger
+// Swagger (enabled in all environments)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// =======================
 // JWT AUTHENTICATION
-// =======================
-
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 
 builder.Services.AddAuthentication(options =>
@@ -73,27 +84,33 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-//EMAIL SERVICE and SMS SERVICE
+// EMAIL SERVICE and SMS SERVICE
 builder.Services.AddScoped<IEmailService<EmailService>, EmailService>();
-
 builder.Services.AddScoped<ISmsService, SmsService>();
 builder.Services.AddScoped<NotificationService>();
+
 // =======================
 // BUILD APP
 // =======================
-
 var app = builder.Build();
 
-//temp for debug developer 
-app.UseDeveloperExceptionPage();
+// =======================
+// APPLY EF CORE MIGRATIONS AUTOMATICALLY
+// =======================
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<NassadContext>();
+    db.Database.Migrate(); // automatically applies pending migrations
+}
+
 // =======================
 // MIDDLEWARE
 // =======================
 
+// Developer exception page
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseDeveloperExceptionPage();
 }
 else
 {
@@ -101,23 +118,30 @@ else
     app.UseHsts();
 }
 
+// Swagger always enabled
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Nassad API V1");
+});
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
-// 🔐 VERY IMPORTANT ORDER
-app.UseAuthentication(); // <-- MUST be before Authorization
+  // developer mode
+//app.UseCors("AllowLocalhost"); // MUST be before Authentication/Authorization
+// 🔐 Authentication must come before Authorization
+app.UseAuthentication();
 app.UseAuthorization();
 
+// Map controllers and routes
 app.MapControllers();
-
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=index}/{id?}"
 );
 
-
+// Map SignalR hub
 app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();

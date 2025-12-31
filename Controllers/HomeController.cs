@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Nass.Models;
 
@@ -46,7 +46,7 @@ namespace Nass.Controllers
             if (UserType == "Agency")
             {
                 ViewBag.Message = $"Logging in as Agency: {email}";
-                
+
                 // Add your Agency login validation here
             }
             else if (UserType == "Customer")
@@ -57,5 +57,22 @@ namespace Nass.Controllers
 
             return View();
         }
+
+        // ✅ ADD THESE ACTIONS
+        public IActionResult Privacy()
+        {
+            return View();
+        }
+
+        public IActionResult Terms()
+        {
+            return View();
+        }
+
+        public IActionResult Refund()
+        {
+            return View();
+        }
+
     }
 }

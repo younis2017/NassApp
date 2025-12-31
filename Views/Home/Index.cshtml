@@ -333,8 +333,8 @@
     </section>
 
     <!-- ================= CONTACT ================= -->
-    <section id="contact" class="py-20 bg-gray-50">
-        <div class="container mx-auto px-6 grid lg:grid-cols-2 gap-12">
+    <section id="contact" class=" py-20 bg-gray-50">
+        <div class="container mx-auto px-6 grid lg:grid-cols-0 gap-12">
 
             <!-- Info -->
             <div>
@@ -352,7 +352,7 @@
             <form id="orderForm" class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-lg space-y-4">
                 <h2 class="text-2xl font-bold text-center mb-4">Submit Your Order</h2>
 
-                <input name="CustomerName" required placeholder="Name"  class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input name="CustomerName" required placeholder="Company Name"  class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 <input name="CustomerPhone" type="tel"
                        required
                        placeholder="6470000000"
@@ -360,9 +360,9 @@
                        maxlength="10"
                        inputmode="numeric"
                        title="Phone number must be exactly 10 digits"  class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <input name="CustomerEmail" required placeholder="Email" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <input name="CustomerAddress" required placeholder="Address" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <input type="url" name="transUrl" required placeholder="URL" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input name="CustomerEmail" required placeholder="Email Address" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input name="CustomerAddress" required placeholder="your Address" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="url" name="transUrl" required placeholder="Share your URL project : wetransfer, DropBox, OneDrive, GoogleDrive" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
 
                 <select name="Trans_categories" required class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">Select Service</option>
@@ -403,14 +403,21 @@
 
                 <div>
                     <h4 class="mb-4">Quick Links</h4>
-                    <div class="space-y-2">
+                    <div class="space-y-1">
                         <button onclick="scrollToSection('home')" class="block text-gray-400 hover:text-[#ff6b35] transition-colors">Home</button>
                         <button onclick="scrollToSection('services')" class="block text-gray-400 hover:text-[#ff6b35] transition-colors">How It Works</button>
                         <button onclick="scrollToSection('about')" class="block text-gray-400 hover:text-[#ff6b35] transition-colors">About</button>
                         <button onclick="scrollToSection('contact')" class="block text-gray-400 hover:text-[#ff6b35] transition-colors">Submit Project</button>
                     </div>
-                </div>
+                
+                    <h4 class="mb-4">Legal & Privacy</h4>
+                    <div class="space-y-4">
+                        <a asp-controller="Home" asp-action="Privacy">Privacy Policy</a> |
+                        <a asp-controller="Home" asp-action="Terms">Terms & Conditions</a> |
+                        <a asp-controller="Home" asp-action="Refund">Refund Policy</a>
 
+                    </div>
+                </div>
                 <div>
                     <h4 class="mb-4">Follow Us</h4>
                     <div class="flex gap-4">

@@ -12,8 +12,8 @@ using Nass.Data;
 namespace Nass.Migrations
 {
     [DbContext(typeof(NassadContext))]
-    [Migration("20251226115906_AddAgencyAndCustomerStatus")]
-    partial class AddAgencyAndCustomerStatus
+    [Migration("20251228174513_MyMigration5")]
+    partial class MyMigration5
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -59,7 +59,7 @@ namespace Nass.Migrations
                     b.Property<string>("AgencyPhone")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("AgencyStatus")
+                    b.Property<int>("AgencyStatus")
                         .HasColumnType("int");
 
                     b.Property<string>("AgencyTaxId")
@@ -139,7 +139,7 @@ namespace Nass.Migrations
                     b.Property<string>("CustomerPhone")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("CustomerStatus")
+                    b.Property<int>("CustomerStatus")
                         .HasColumnType("int");
 
                     b.Property<string>("CustomerTaxId")

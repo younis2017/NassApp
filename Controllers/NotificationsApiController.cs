@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Nass.Data;
 using Nass.Models;
+using Nass.Services.Email;
+using Nass.Services.SMS;
 
 namespace Nass.Controllers
 {
@@ -10,10 +13,15 @@ namespace Nass.Controllers
     public class NotificationsApiController : ControllerBase
     {
         private readonly NassadContext _context;
-
-        public NotificationsApiController(NassadContext context)
+        private readonly IEmailService<EmailService> _emailService;
+        private readonly TwilioSmsService _sms;
+        public NotificationsApiController(NassadContext context,
+            IEmailService<EmailService> emailService,
+            TwilioSmsService sms)
         {
             _context = context;
+            _emailService = emailService;
+            _sms = sms;
         }
 
         // =========================
@@ -54,58 +62,128 @@ namespace Nass.Controllers
             if (agency == null)
                 return BadRequest(new { message = "Invalid tenant" });
 
-            // Use a transaction to avoid race conditions
-            using var dbTransaction = await _context.Database.BeginTransactionAsync();
-            try
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+            return await strategy.ExecuteAsync(async () =>
             {
-                var transaction = await _context.Transactions
-                    .FirstOrDefaultAsync(t => t.Trans_id == transactionId);
-
-                if (transaction == null)
-                    return BadRequest(new { message = "Transaction not found" });
-
-                if (transaction.TransStatus == 1)
+                // Use a transaction inside the strategy
+                await using var dbTransaction = await _context.Database.BeginTransactionAsync();
+                try
                 {
-                    // Already confirmed by another agency
-                    return BadRequest(new { message = "Transaction already confirmed by another agency" });
+                    var transaction = await _context.Transactions
+                        .FirstOrDefaultAsync(t => t.Trans_id == transactionId);
+
+                    if (transaction == null)
+                        return BadRequest(new { message = "Transaction not found" });
+
+                    if (transaction.TransStatus == 1)
+                        return BadRequest(new { message = "Transaction already confirmed by another agency" });
+
+                    // 1️⃣ Mark transaction as confirmed
+                    transaction.TransStatus = 1;
+                    transaction.Agency_id = agency.AgencyId;
+                    transaction.Agency_tenat = agency.AgencyTenet;
+                    transaction.trans_recived_date = DateTime.UtcNow;
+
+                    // 2️⃣ Update NotificationRecipients
+                    var recipients = await _context.NotificationRecipients
+                        .Where(nr => nr.Trans_id == transactionId)
+                        .ToListAsync();
+
+                    foreach (var r in recipients)
+                    {
+                        if (r.AgencyId == agency.AgencyId)
+                        {
+                            r.Status = "Confirmed";
+                            r.IsRead = true;
+                            r.ReadAt = DateTime.UtcNow;
+                        }
+                        else
+                        {
+                            r.Status = "Rejected";
+                        }
+                    }
+
+                    await _context.SaveChangesAsync();
+                    // Load customer for email
+                    var customer = await _context.Customers
+                        .FirstOrDefaultAsync(c => c.CustomerId == transaction.Customer_id);
+                    if (customer != null && !string.IsNullOrWhiteSpace(customer.CustomerEmail))
+                    {
+                        string confirmEmailBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {{ font-family: Arial; background:#f4f6f8; padding:20px; }}
+.container {{ max-width:650px; background:#fff; margin:auto; border-radius:8px; overflow:hidden; }}
+.header {{ background:#28a745; color:#fff; padding:20px; text-align:center; }}
+.content {{ padding:20px; color:#000; }}
+.box {{ background:#f9f9f9; padding:15px; border-radius:5px; margin:15px 0; }}
+.footer {{ background:#28a745; color:#fff; text-align:center; padding:15px; font-size:12px; }}
+</style>
+</head>
+<body>
+
+<div class='container'>
+<div class='header'>
+<h2>🎉 Your Order Is Confirmed</h2>
+<p>NASS Advertising & Designing</p>
+</div>
+
+<div class='content'>
+<p>Dear <strong>{customer.CustomerName}</strong>,</p>
+
+<p>Good news! Your order has been <strong>confirmed</strong> and assigned to one of our partner agencies.</p>
+
+<div class='box'>
+<h3>🏢 Agency Details</h3>
+<p><strong>Name:</strong> {agency.AgencyName}</p>
+<p><strong>Email:</strong> {agency.AgencyEmail}</p>
+<p><strong>Phone:</strong> {agency.AgencyPhone}</p>
+</div>
+
+<div class='box'>
+<h3>📦 Order Details</h3>
+<p><strong>Service:</strong> {transaction.Trans_categories}</p>
+<p><strong>Description:</strong><br />{transaction.Trans_description}</p>
+<p><strong>Confirmed On:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm}</p>
+</div>
+
+<p>The agency will contact you shortly to proceed.</p>
+
+<p>Thank you for choosing <strong>NASS Advertising & Designing</strong>.</p>
+</div>
+
+<div class='footer'>
+support@nassad.ca | +1 (647) 913-1282<br/>
+© {DateTime.UtcNow.Year} Nassad
+</div>
+</div>
+
+</body>
+</html>";
+
+                        await _emailService.SendAsync(
+                            customer.CustomerEmail,
+                            "🎉 Your Order Has Been Confirmed – Nassad",
+                            confirmEmailBody
+                        );
+                    }
+
+
+                    await dbTransaction.CommitAsync();
+
+                    return Ok(new { message = $"Transaction confirmed by {agency.AgencyName}" });
                 }
-
-                // 1️⃣ Mark transaction as confirmed
-                transaction.TransStatus = 1;
-                transaction.Agency_id = agency.AgencyId;
-                transaction.Agency_tenat = agency.AgencyTenet;
-                transaction.trans_recived_date = DateTime.UtcNow;
-
-                // 2️⃣ Update NotificationRecipients
-                var recipients = await _context.NotificationRecipients
-                    .Where(nr => nr.Trans_id == transactionId)
-                    .ToListAsync();
-
-                foreach (var r in recipients)
+                catch (Exception ex)
                 {
-                    if (r.AgencyId == agency.AgencyId)
-                    {
-                        r.Status = "Confirmed";
-                        r.IsRead = true;
-                        r.ReadAt = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        r.Status = "Rejected";
-                    }
+                    await dbTransaction.RollbackAsync();
+                    return StatusCode(500, new { message = "Server error", detail = ex.Message });
                 }
-
-                await _context.SaveChangesAsync();
-                await dbTransaction.CommitAsync();
-
-                return Ok(new { message = $"Transaction confirmed by {agency.AgencyName}" });
-            }
-            catch (Exception ex)
-            {
-                await dbTransaction.RollbackAsync();
-                return StatusCode(500, new { message = "Server error", detail = ex.Message });
-            }
+            });
         }
+
 
         // =========================
         // REJECT: logs rejection only, does not block others
