@@ -40,7 +40,8 @@ namespace Nass.Controllers
                 var agency = await _context.Agencies
                     .FirstOrDefaultAsync(a =>
                         a.AgencyTenet == dto.Tenat &&
-                        a.AgencyPassword == dto.Password);
+                        a.AgencyPassword == dto.Password && 
+                        a.AgencyStatus == 0);
 
                 if (agency == null)
                     return Unauthorized(new { success = false, message = "Invalid agency credentials" });
@@ -62,7 +63,8 @@ namespace Nass.Controllers
                 var customer = await _context.Customers
                     .FirstOrDefaultAsync(c =>
                         c.CustomerTenet == dto.Tenat &&
-                        c.CustomerPassword == dto.Password);
+                        c.CustomerPassword == dto.Password &&
+                        c.CustomerStatus == 0);
 
                 if (customer == null)
                     return Unauthorized(new { success = false, message = "Invalid customer credentials" });

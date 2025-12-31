@@ -99,32 +99,105 @@ namespace Nass.Controllers
             var transaction = await _context.Transactions
                 .FirstOrDefaultAsync(t =>
                     t.Trans_id == transactionId &&
-                    t.TransStatus ==0);
+                    t.TransStatus == 0);
 
             if (transaction == null)
                 return BadRequest("Transaction already handled");
 
+            // ✅ Assign agency + confirm
             transaction.TransStatus = 1;
             transaction.Agency_id = agencyId;
-            transaction.trans_recived_date = DateTime.UtcNow;
+            transaction.trans_recived_date = tz;
 
-            // Save history (winner)
+            // ✅ Save history (winner)
             _context.NotificationRecipients.Add(new NotificationRecipient
             {
                 Trans_id = transaction.Trans_id,
                 AgencyId = agencyId,
                 Status = "Confirmed",
-                ReadAt = tz
+                ReadAt = DateTime.UtcNow
             });
 
             await _context.SaveChangesAsync();
 
-            // 🔔 Remove from all dashboards instantly
+            // 🔔 Remove from dashboards
             await _hub.Clients.Group("Agencies")
                 .SendAsync("TransactionClaimed", transaction.Trans_id);
 
-            return Ok(new { message = "Transaction accepted" });
+            // =========================
+            // 📧 SEND CONFIRM EMAIL
+            // =========================
+            var customer = await _context.Customers
+                .FirstOrDefaultAsync(c => c.CustomerId == transaction.Customer_id);
+
+            var agency = await _context.Agencies
+                .FirstOrDefaultAsync(a => transaction.Agency_id == a.AgencyId);
+
+            if (customer != null && agency != null && !string.IsNullOrWhiteSpace(customer.CustomerEmail))
+            {
+                string emailBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {{ font-family: Arial; background:#f4f6f8; padding:20px; }}
+.container {{ max-width:650px; background:#fff; margin:auto; border-radius:8px; }}
+.header {{ background:#28a745; color:#fff; padding:20px; text-align:center; }}
+.content {{ padding:20px; }}
+.box {{ background:#f9f9f9; padding:15px; border-radius:5px; margin:15px 0; }}
+.footer {{ background:#28a745; color:#fff; text-align:center; padding:15px; font-size:12px; }}
+</style>
+</head>
+<body>
+
+<div class='container'>
+<div class='header'>
+<h2>🎉 Your Order Has Been Confirmed</h2>
+<p>NASS Advertising & Designing</p>
+</div>
+
+<div class='content'>
+<p>Dear <strong>{customer.CustomerName}</strong>,</p>
+
+<p>Great news! Your order has been successfully confirmed by one of our trusted agencies.</p>
+
+<div class='box'>
+<h3>🏢 Agency Details</h3>
+<p><strong>Name:</strong> {agency.AgencyName}</p>
+<p><strong>Email:</strong> {agency.AgencyEmail}</p>
+<p><strong>Phone:</strong> {agency.AgencyPhone}</p>
+</div>
+
+<div class='box'>
+<h3>📦 Order Details</h3>
+<p><strong>Service:</strong> {transaction.Trans_categories}</p>
+<p><strong>Description:</strong><br />{transaction.Trans_description}</p>
+<p><strong>Confirmed On:</strong> {tz:yyyy-MM-dd HH:mm}</p>
+</div>
+
+<p>The agency may contact you shortly to proceed with the next steps.</p>
+
+</div>
+
+<div class='footer'>
+support@nassad.ca | +1 (647) 913-1282<br/>
+© {tz.Year} Nassad
+</div>
+</div>
+
+</body>
+</html>";
+
+                await _emailService.SendAsync(
+                    customer.CustomerEmail,
+                    "🎉 Your Order Is Confirmed – Nassad",
+                    emailBody
+                );
+            }
+
+            return Ok(new { message = "Transaction accepted & email sent" });
         }
+
 
         // =========================
         // REJECT TRANSACTION
@@ -187,6 +260,16 @@ namespace Nass.Controllers
             return 1;
         }
 
+        // ===============================
+        //  CREATE TRANSACTION FROM PUBLIC FORM and send to all agencies email + sms
+        //  1️⃣ Find or Create Customer
+        //  2️⃣ Create Transaction
+        //  3️⃣ Create Notification
+        //  4️⃣ Send to all Agencies (DB)
+        //  5️⃣ Email all Agencies / SMS
+        //  6️⃣ Email Customer Confirmation
+        //  7️⃣ Response
+        // ===============================
         [HttpPost("receive-order")]
         public async Task<IActionResult> ReceiveOrder()
         {
@@ -316,22 +399,22 @@ namespace Nass.Controllers
                 // ===============================
                 foreach (var agency in activeAgencies)
                 {
-                if (!string.IsNullOrWhiteSpace(agency.AgencyPhone))
-                {
-                    try
-                    {
-                        _sms.SendSms(
-                            agency.AgencyPhone,
-                            $"There's new Order by NASSAD.ca" +
-                            $"Service: {transaction.Trans_categories}. please login and accept the order."
-                        );
-                    }
-                    catch (Exception ex)
-                    {
-                        // Optional: log but do NOT fail order
-                        Console.WriteLine("SMS Error: " + ex.Message);
-                    }
-                }
+                //if (!string.IsNullOrWhiteSpace(agency.AgencyPhone))
+                //{
+                //    try
+                //    {
+                //        _sms.SendSms(
+                //            agency.AgencyPhone,
+                //            $"There's new Order by NASSAD.ca" +
+                //            $"Service: {transaction.Trans_categories}. please login and accept the order."
+                //        );
+                //    }
+                //    catch (Exception ex)
+                //    {
+                //        // Optional: log but do NOT fail order
+                //        Console.WriteLine("SMS Error: " + ex.Message);
+                //    }
+                //}
                 if (string.IsNullOrWhiteSpace(agency.AgencyEmail))
                         continue;
 
@@ -368,7 +451,7 @@ body {{ font-family: Arial; background:#f4f6f8; padding:20px; }}
 <p><strong>Date:</strong> {transaction.Trans_date:yyyy-MM-dd HH:mm}</p>
 </div>
 
-<a class='btn' href='https://localhost:7249/home/login'>View Order</a>
+<a class='btn' href='/home/login'>View Order</a>
 </div>
 
 <div class='footer'>
