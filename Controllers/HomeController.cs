@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Nass.Models;
+using Nass.Domain.Entities;
 
 namespace Nass.Controllers
 {

@@ -4,63 +4,65 @@ using Microsoft.EntityFrameworkCore;
 using Nass.Data;
 using Nass.Helpers;
 using Nass.Hubs;
-using Nass.Models;
-using Nass.Services.Email;
-using Nass.Services.SMS;
+using System.Net.Mail;
+using System.Text.Json;
+using Nass.Domain.Entities;
+using Nass.Email;
+using Nass.SMS;
 
 namespace Nass.Controllers
-{
+    {
 
     [ApiController]
     [Route("api/transactions")]
-    public class TransactionsApiController : ControllerBase
-    {
+    public class TransactionsApiController: ControllerBase
+        {
         private readonly NassadContext _context;
         private readonly NotificationService _notificationService;
         private readonly IHubContext<NotificationHub> _hub;
         private readonly IEmailService<EmailService> _emailService;
         private readonly TwilioSmsService _sms;
-        public TransactionsApiController(
+        public TransactionsApiController (
             NassadContext context,
             NotificationService notificationService,
             IHubContext<NotificationHub> hub,
             IEmailService<EmailService> emailService,
             TwilioSmsService sms)
-           
 
-        {
+
+            {
             _context = context;
             _notificationService = notificationService;
             _hub = hub;
             _emailService = emailService;
-             _sms = sms;
-        }
+            _sms = sms;
+            }
         //Get DateTime by Eastern Standard
-      
-            DateTime tz = DateTimeHelper.NowET();
-        
+
+        DateTime tz = DateTimeHelper.NowET();
+
 
 
         // =========================
         // GET ALL TRANSACTIONS
         // =========================
         [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
+        public async Task<IActionResult> GetAll ()
+            {
             var transactions = await _context.Transactions
                 .Include(t => t.Customer)
                 .Include(t => t.Agency)
                 .ToListAsync();
 
             return Ok(transactions);
-        }
+            }
 
         // =========================
         // CREATE TRANSACTION (BLIND)
         // =========================
         [HttpPost]
-        public async Task<IActionResult> Create(Transaction transaction)
-        {
+        public async Task<IActionResult> Create (Transaction transaction)
+            {
             var customer = await _context.Customers
                 .FirstOrDefaultAsync(c => c.CustomerId == transaction.Customer_id);
 
@@ -68,10 +70,10 @@ namespace Nass.Controllers
                 return BadRequest("Customer not found");
 
             if (string.IsNullOrEmpty(customer.CustomerTenet))
-            {
+                {
                 customer.CustomerTenet = GenerateCustomerTenet(customer);
                 await _context.SaveChangesAsync();
-            }
+                }
 
             transaction.Trans_uid = Guid.NewGuid();
             transaction.Trans_date = tz;
@@ -86,14 +88,14 @@ namespace Nass.Controllers
             await _notificationService.BroadcastNewTransactionAsync(transaction);
 
             return Ok(transaction);
-        }
+            }
 
         // =========================
         // ACCEPT TRANSACTION
         // =========================
         [HttpPut("accept/{transactionId}")]
-        public async Task<IActionResult> Accept(int transactionId)
-        {
+        public async Task<IActionResult> Accept (int transactionId)
+            {
             int agencyId = GetLoggedInAgencyId();
 
             var transaction = await _context.Transactions
@@ -111,12 +113,12 @@ namespace Nass.Controllers
 
             // ✅ Save history (winner)
             _context.NotificationRecipients.Add(new NotificationRecipient
-            {
+                {
                 Trans_id = transaction.Trans_id,
                 AgencyId = agencyId,
                 Status = "Confirmed",
                 ReadAt = DateTime.UtcNow
-            });
+                });
 
             await _context.SaveChangesAsync();
 
@@ -134,7 +136,7 @@ namespace Nass.Controllers
                 .FirstOrDefaultAsync(a => transaction.Agency_id == a.AgencyId);
 
             if (customer != null && agency != null && !string.IsNullOrWhiteSpace(customer.CustomerEmail))
-            {
+                {
                 string emailBody = $@"
 <!DOCTYPE html>
 <html>
@@ -193,18 +195,18 @@ support@nassad.ca | +1 (647) 913-1282<br/>
                     "🎉 Your Order Is Confirmed – Nassad",
                     emailBody
                 );
-            }
+                }
 
             return Ok(new { message = "Transaction accepted & email sent" });
-        }
+            }
 
 
         // =========================
         // REJECT TRANSACTION
         // =========================
         [HttpPut("reject/{transactionId}")]
-        public async Task<IActionResult> Reject(int transactionId)
-        {
+        public async Task<IActionResult> Reject (int transactionId)
+            {
             int agencyId = GetLoggedInAgencyId();
 
             var transaction = await _context.Transactions
@@ -216,23 +218,23 @@ support@nassad.ca | +1 (647) 913-1282<br/>
                 return BadRequest("Transaction already handled");
 
             _context.NotificationRecipients.Add(new NotificationRecipient
-            {
+                {
                 Trans_id = transaction.Trans_id,
                 AgencyId = agencyId,
                 Status = "Rejected",
                 ReadAt = tz
-            });
+                });
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Transaction rejected" });
-        }
+            }
 
         // =========================
         // DELETE
         // =========================
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
+        public async Task<IActionResult> Delete (int id)
+            {
             var transaction = await _context.Transactions.FindAsync(id);
             if (transaction == null) return NotFound();
 
@@ -240,25 +242,25 @@ support@nassad.ca | +1 (647) 913-1282<br/>
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
+            }
 
         // =========================
         // HELPERS
         // =========================
-        private string GenerateCustomerTenet(Customer customer)
-        {
+        private string GenerateCustomerTenet (Customer customer)
+            {
             var name = customer.CustomerName ?? "CUST";
             var letters = new string(name.Where(char.IsLetter).ToArray());
             var last4 = letters.Length >= 4 ? letters[^4..] : letters.PadLeft(4, 'X');
             var last3 = customer.CustomerId.ToString().PadLeft(3, '0');
             return (last4 + last3).ToUpper();
-        }
+            }
 
         // TODO: Replace with JWT
-        private int GetLoggedInAgencyId()
-        {
+        private int GetLoggedInAgencyId ()
+            {
             return 1;
-        }
+            }
 
         // ===============================
         //  CREATE TRANSACTION FROM PUBLIC FORM and send to all agencies email + sms
@@ -271,17 +273,22 @@ support@nassad.ca | +1 (647) 913-1282<br/>
         //  7️⃣ Response
         // ===============================
         [HttpPost("receive-order")]
-        public async Task<IActionResult> ReceiveOrder()
-        {
+        public async Task<IActionResult> ReceiveOrder ()
+            {
             var form = Request.Form;
 
+            // ===============================
+            // 0️⃣ EXTRACT FORM VALUES
+            // ===============================
             string customerName = form.TryGetValue("CustomerName", out var name) ? name.ToString() : "";
             string customerPhone = form.TryGetValue("CustomerPhone", out var phone) ? phone.ToString() : "";
             string customerEmail = form.TryGetValue("CustomerEmail", out var email) ? email.ToString() : "";
             string customerAddress = form.TryGetValue("CustomerAddress", out var address) ? address.ToString() : "";
             string transUrl = form.TryGetValue("transUrl", out var location) ? location.ToString() : "";
-
-            string transCategory = form.TryGetValue("Trans_categories", out var cat) ? cat.ToString() : "";
+            // Multi-select categories (from checkboxes)
+            var transCategories = form["Trans_categories"].ToList(); // List<string>
+            // Optional: join them into a single string if you want to store in DB
+            string transCategoryCsv = string.Join(", ", transCategories);
             string transDescription = form.TryGetValue("Trans_description", out var desc) ? desc.ToString() : "";
 
             if (string.IsNullOrWhiteSpace(customerName))
@@ -291,134 +298,194 @@ support@nassad.ca | +1 (647) 913-1282<br/>
                 return BadRequest("Customer phone is required");
 
             // ===============================
-            // 1️⃣ FIND OR CREATE CUSTOMER
+            // 1️⃣ HANDLE FILE UPLOAD (SECURE)
+            // ===============================
+            var uploadedFile = Request.Form.Files["TransFile"];
+
+            if (uploadedFile != null && uploadedFile.Length > 0)
+                {
+                const long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+                var allowedExtensions = new[]
+ {
+    // Images
+    ".jpg", ".jpeg", ".png",
+
+    // Documents
+    ".pdf", ".doc", ".docx", ".zip",
+
+    // Adobe
+    ".psd", ".psb", ".ai", ".eps",
+
+    // AutoCAD
+    ".dwg", ".dxf"
+};
+
+                var allowedMimeTypes = new[]
+                {
+                 "image/jpeg",
+                 "image/png",
+                 "application/pdf",
+                 "application/msword",
+                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                 "application/zip"
+                 };
+
+                if (uploadedFile.Length > MAX_FILE_SIZE)
+                    return BadRequest("File size exceeds 10MB");
+
+                var extension = Path.GetExtension(uploadedFile.FileName).ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(extension))
+                    return BadRequest("File type not allowed");
+
+                if (!allowedMimeTypes.Contains(uploadedFile.ContentType))
+                    return BadRequest("Invalid file content");
+
+                //var uploadFolder = Path.Combine(
+                //    Directory.GetCurrentDirectory(),
+                //    "wwwroot",
+                //    "uploads"
+                //);
+
+                //if (!Directory.Exists(uploadFolder))
+                //    Directory.CreateDirectory(uploadFolder);
+
+                //// 🔐 SAFE filename (do NOT trust user filename)
+                //var safeFileName = $"{Guid.NewGuid()}{extension}";
+                //var savedFilePath = Path.Combine(uploadFolder, safeFileName);
+
+                //using (var stream = new FileStream(savedFilePath, FileMode.Create))
+                //    {
+                //    await uploadedFile.CopyToAsync(stream);
+                //    }
+
+                //transUrl = $"/uploads/{safeFileName}";
+                using var httpClient = new HttpClient();
+
+                using var content = new MultipartFormDataContent();
+                content.Add(
+                    new StreamContent(uploadedFile.OpenReadStream()),
+                    "file", // MUST match $_FILES['file']
+                    uploadedFile.FileName
+                );
+
+                var response = await httpClient.PostAsync(
+                    "https://nassad.ca/api/upload.php",
+                    content
+                );
+
+                if (!response.IsSuccessStatusCode)
+                    {
+                    var error = await response.Content.ReadAsStringAsync();
+                    return BadRequest($"Upload failed: {error}");
+                    }
+
+                var json = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<JsonElement>(json);
+
+                var relativeUrl = result.GetProperty("url").GetString();
+                transUrl = $"https://nassad.ca{relativeUrl}";
+
+
+                }
+
+
+            // ===============================
+            // 2️⃣ FIND OR CREATE CUSTOMER
             // ===============================
             var customer = await _context.Customers
-    .FirstOrDefaultAsync(c => c.CustomerPhone == customerPhone &&
-        c.CustomerEmail == customerEmail);
+                .FirstOrDefaultAsync(c => c.CustomerPhone == customerPhone &&
+                                          c.CustomerEmail == customerEmail);
 
-            // 🔎 NEW: single, global rule — block inactive customers immediately
-            if (customer != null && customer.CustomerStatus != 0 )
-            
+            if (customer != null && customer.CustomerStatus != 0)
                 return BadRequest("This customer is inactive. Cannot create order.");
-           
 
-                bool isNewCustomer = false;
-                string tenant;
-                string password;
+            bool isNewCustomer = false;
+            string tenant;
+            string password;
+            var tz = DateTime.UtcNow;
 
-                if (customer == null)
+            if (customer == null)
                 {
-                    tenant = TenantGenerator.GenerateTenant(customerName, customerPhone);
-                    password = TenantGenerator.GeneratePassword();
+                tenant = TenantGenerator.GenerateTenant(customerName, customerPhone);
+                password = TenantGenerator.GeneratePassword();
 
-                    customer = new Customer
+                customer = new Customer
                     {
-                        CustomerName = customerName,
-                        CustomerPhone = customerPhone,
-                        CustomerEmail = customerEmail,
-                        CustomerAddress = customerAddress,
-                        CustomerLocation = "",
-                        CustomerTenet = tenant,
-                        CustomerUsername = tenant,
-                        CustomerPassword = password,
-                        CustomerUid = Guid.NewGuid(),
-                        CustomerJoinedDate = tz,
-                        CustomerStatus = 0 // active
+                    CustomerName = customerName,
+                    CustomerPhone = customerPhone,
+                    CustomerEmail = customerEmail,
+                    CustomerAddress = customerAddress,
+                    CustomerLocation = "",
+                    CustomerTenet = tenant,
+                    CustomerUsername = tenant,
+                    CustomerPassword = password,
+                    CustomerUid = Guid.NewGuid(),
+                    CustomerJoinedDate = tz,
+                    CustomerStatus = 0 // active
                     };
 
-                    _context.Customers.Add(customer);
-                    await _context.SaveChangesAsync();
-                    isNewCustomer = true;
+                _context.Customers.Add(customer);
+                await _context.SaveChangesAsync();
+                isNewCustomer = true;
                 }
-                else
+            else
                 {
-                    tenant = customer.CustomerTenet;
-                    password = customer.CustomerPassword;
-
-
+                tenant = customer.CustomerTenet;
+                password = customer.CustomerPassword;
                 }
-            
+
             // ===============================
-            // 2️⃣ CREATE TRANSACTION
+            // 3️⃣ CREATE TRANSACTION
             // ===============================
             var transaction = new Transaction
-            {
+                {
                 Trans_uid = Guid.NewGuid(),
                 Trans_date = tz,
-                Trans_categories = transCategory,
+                Trans_categories = transCategoryCsv,
                 Trans_description = transDescription,
                 Trans_url = transUrl,
                 TransStatus = 0,
                 Customer_id = customer.CustomerId
-            };
-          
-            _context.Transactions.Add(transaction);
-                await _context.SaveChangesAsync();
-
-                // ===============================
-                // 3️⃣ CREATE NOTIFICATION
-                // ===============================
-                var notification = new Notification
-                {
-                    Trans_Id = transaction.Trans_id,
-                    Title = "New Blind Order",
-                    Message = "A new order is available for agencies",
-                    IsPublished = true,
-                    CreatedAt = tz      
                 };
 
-                _context.Notifications.Add(notification);
-                await _context.SaveChangesAsync();
+            _context.Transactions.Add(transaction);
+            await _context.SaveChangesAsync();
 
-                // ===============================
-                // 4️⃣ SEND TO ALL AGENCIES (DB)
-                // ===============================
-                var agencies = await _context.Agencies.ToListAsync();
-            var activeAgencies = agencies
-    .Where(a => a.AgencyStatus == 0 && !string.IsNullOrWhiteSpace(a.AgencyEmail))
-    .ToList();
-            foreach (var agency in activeAgencies)
+            // ===============================
+            // 4️⃣ CREATE NOTIFICATION
+            // ===============================
+            var notification = new Notification
                 {
-           
+                Trans_Id = transaction.Trans_id,
+                Title = "New Blind Order",
+                Message = "A new order is available for agencies",
+                IsPublished = true,
+                CreatedAt = tz
+                };
 
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            // ===============================
+            // 5️⃣ SEND TO ALL ACTIVE AGENCIES
+            // ===============================
+            var agencies = await _context.Agencies.Where(a => a.AgencyStatus == 0 && !string.IsNullOrWhiteSpace(a.AgencyEmail)).ToListAsync();
+
+            foreach (var agency in agencies)
+                {
                 _context.NotificationRecipients.Add(new NotificationRecipient
                     {
-                        NotificationId = notification.NotificationId,
-                        Trans_id = transaction.Trans_id,
-                        AgencyId = agency.AgencyId,
-                        Status = "Pending",
-                        IsRead = false
+                    NotificationId = notification.NotificationId,
+                    Trans_id = transaction.Trans_id,
+                    AgencyId = agency.AgencyId,
+                    Status = "Pending",
+                    IsRead = false
                     });
-                }
 
-                await _context.SaveChangesAsync();
-
-                // ===============================
-                // 5️⃣ EMAIL ALL AGENCIES
-                // ===============================
-                foreach (var agency in activeAgencies)
-                {
-                //if (!string.IsNullOrWhiteSpace(agency.AgencyPhone))
-                //{
-                //    try
-                //    {
-                //        _sms.SendSms(
-                //            agency.AgencyPhone,
-                //            $"There's new Order by NASSAD.ca" +
-                //            $"Service: {transaction.Trans_categories}. please login and accept the order."
-                //        );
-                //    }
-                //    catch (Exception ex)
-                //    {
-                //        // Optional: log but do NOT fail order
-                //        Console.WriteLine("SMS Error: " + ex.Message);
-                //    }
-                //}
-                if (string.IsNullOrWhiteSpace(agency.AgencyEmail))
-                        continue;
-
-                    string agencyEmailBody = $@"
+                // SEND EMAIL TO AGENCY
+                string agencyEmailBody = $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -451,7 +518,7 @@ body {{ font-family: Arial; background:#f4f6f8; padding:20px; }}
 <p><strong>Date:</strong> {transaction.Trans_date:yyyy-MM-dd HH:mm}</p>
 </div>
 
-<a class='btn' href='/home/login'>View Order</a>
+<a class='btn' href='https://www.nassad.ca'>View Order</a>
 </div>
 
 <div class='footer'>
@@ -462,81 +529,34 @@ support@nassad.ca | +1 (647) 913-1282<br/>
 
 </body>
 </html>";
-
+                if (IsValidEmail(agency.AgencyEmail))
+                    {
                     await _emailService.SendAsync(
-                        agency.AgencyEmail,
-                        "🆕 New Order Available – Nassad",
-                        agencyEmailBody
+                     agency.AgencyEmail,
+                     "🆕 New Order Available – Nassad",
+                     agencyEmailBody
                     );
+                    }
+
                 }
 
-                // ===============================
-                // SEND SINGLE COPY TO SUPPORT
-                // ===============================
-                string supportEmailBody = $@"
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-body {{ font-family: Arial; background:#f4f6f8; padding:20px; }}
-.container {{ max-width:650px; background:#fff; margin:auto; border-radius:8px; overflow:hidden; }}
-.header {{ background:#ff7a00; color:#fff; padding:20px; text-align:center; }}
-.content {{ padding:20px; color:#000; }}
-.box {{ background:#f9f9f9; padding:15px; border-radius:5px; margin:15px 0; }}
-.footer {{ background:#ff7a00; color:#fff; text-align:center; padding:15px; font-size:12px; }}
-</style>
-</head>
-<body>
+            await _context.SaveChangesAsync();
 
-<div class='container'>
-<div class='header'>
-<h2>📩 New Order Broadcast</h2>
-<p>NASS Advertising & Designing</p>
-</div>
-
-<div class='content'>
-<p>A new order has been sent to <strong>{agencies.Count}</strong> agencies.</p>
-
-<div class='box'>
-<p><strong>Customer:</strong> {customer.CustomerName}</p>
-<p><strong>Service:</strong> {transaction.Trans_categories}</p>
-<p><strong>Description:</strong><br />{transaction.Trans_description}</p>
-<p><strong>Date:</strong> {transaction.Trans_date:yyyy-MM-dd HH:mm}</p>
-</div>
-</div>
-
-<div class='footer'>
-© {tz.Year} Nassad
-</div>
-</div>
-
-</body>
-</html>";
-                await _emailService.SendAgency(
-                    to: "support@nassad.ca",
-                    subject: "📩 New Order Sent to Agencies – Nassad",
-                    body: supportEmailBody,
-                    bcc: null
-                );
-            
             // ===============================
             // 6️⃣ EMAIL CUSTOMER CONFIRMATION
             // ===============================
-            string credentialsBlock = "";
-
-            if (isNewCustomer)
-            {
-                credentialsBlock = $@"
-    <div class='box'>
-        <h3>🔐 Your Account Details</h3>
-        <p><strong>Username:</strong> {customer.CustomerUsername}</p>
-        <p><strong>Password:</strong> {customer.CustomerPassword}</p>
-    </div>";
-            }
+            string credentialsBlock = isNewCustomer
+                ? $@"
+<div class='box'>
+<h3>🔐 Your Account Details</h3>
+<p><strong>Username:</strong> {customer.CustomerUsername}</p>
+<p><strong>Password:</strong> {customer.CustomerPassword}</p>
+</div>"
+                : "";
 
             if (!string.IsNullOrWhiteSpace(customer.CustomerEmail))
                 {
-                    string customerEmailBody = $@"
+                string customerEmailBody = $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -570,7 +590,7 @@ body {{ font-family: Arial; background:#f4f6f8; padding:20px; }}
 
 <p>Our partner agencies are reviewing your request.</p>
 
-<a class='btn' href='https://nassad.ca'>Visit Our Website</a>
+<a class='btn' href='https://www.nassad.ca'>Visit Our Website</a>
 </div>
 
 <div class='footer'>
@@ -581,28 +601,42 @@ support@nassad.ca | +1 (647) 913-1282<br/>
 
 </body>
 </html>";
+                if (IsValidEmail(customer.CustomerEmail))
+                    {
 
                     await _emailService.SendAsync(
-                        customer.CustomerEmail,
-                        "✅ Your Order Has Been Received – Nassad",
-                        customerEmailBody
+                      customer.CustomerEmail,
+                     "✅ Your Order Has Been Received – Nassad",
+                     customerEmailBody
                     );
+                    }
+
                 }
 
-                // ===============================
-                // 7️⃣ RESPONSE
-                // ===============================
-                return Ok(new
+            // ===============================
+            // 7️⃣ RESPONSE
+            // ===============================
+            return Ok(new
                 {
-                    message = "Order submitted successfully",
-                    customerId = customer.CustomerId,
-                    transactionId = transaction.Trans_id,
-                    isNewCustomer
+                message = "Order submitted successfully",
+                customerId = customer.CustomerId,
+                transactionId = transaction.Trans_id,
+                isNewCustomer
                 });
-            
+            }
+
+        private bool IsValidEmail (string? Email)
+            {
+            if (string.IsNullOrWhiteSpace(Email)) return false;
+            try
+                {
+                var addr = new MailAddress(Email);
+                return true;
+                }
+            catch
+                {
+                return false;
+                }
+            }
         }
-
-        
-
     }
-}

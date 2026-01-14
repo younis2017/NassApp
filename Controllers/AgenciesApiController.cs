@@ -1,12 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Nass.Data;
-using Nass.Models;
+using Nass.Domain.Entities;
 
 namespace Nass.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] //  all actions protected
     public class AgenciesApiController : ControllerBase
     {
         private readonly NassadContext _context;
@@ -19,9 +21,11 @@ namespace Nass.Controllers
         // =========================
         // GET ALL
         // =========================
+      
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
+
             var agencies = await _context.Agencies.ToListAsync();
             return Ok(agencies);
         }
@@ -41,7 +45,7 @@ namespace Nass.Controllers
 
             return Ok(agency);
         }
-
+        
         // =========================
         // SEARCH BY NAME
         // =========================
@@ -119,6 +123,7 @@ namespace Nass.Controllers
         // =========================
         // LOGIN (Basic – Demo Only)
         // =========================
+
         [HttpPost("login")]
         public async Task<IActionResult> Login(string username, string password)
         {
@@ -140,6 +145,7 @@ namespace Nass.Controllers
         }
 
         // agency dashboard
+        [AllowAnonymous]
         [HttpGet("agency")]
         public async Task<IActionResult> GetAgencyDashboard([FromQuery] string tenant)
         {

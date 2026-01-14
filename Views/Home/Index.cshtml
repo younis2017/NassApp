@@ -1,7 +1,7 @@
 ﻿@{
     Layout = null;
     ViewData["Title"] = "HomePage";
-}
+    }
 
 <!DOCTYPE html>
 <html lang="en">
@@ -11,7 +11,8 @@
 
     <title>NASS Advertising & Designing</title>
     <meta name="description" content="Professional printing & creative design solutions" />
-
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="~/images/nassad.png" />
     <!-- Fonts & Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -33,7 +34,7 @@
 
                 <!-- Logo -->
                 <div class="flex-shrink-0">
-                    <img src="~/images/nassad.png" alt="NASS Advertising & Designing" class="h-16">
+                    <img src="images/nassad.png" alt="NASS Advertising & Designing" class="h-16">
                 </div>
 
                 <!-- Desktop Menu -->
@@ -76,7 +77,12 @@
     </nav>
 
     <!-- Hero Section -->
-    <section id="home" class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20" style="background: linear-gradient(to bottom right, #f7b801, #ff6b35, #1a1a1a);">
+    <section id="home" class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20" style=" background-image: url('https://cdnl.iconscout.com/lottie/premium/thumb/gradient-background-animation-gif-download-8227533.gif');    background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;">
         <!-- Animated background shapes -->
         <div class="hero-blob-1 absolute top-20 left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
         <div class="hero-blob-2 absolute bottom-20 right-10 w-48 h-48 rounded-full blur-3xl" style="background-color: rgba(247, 184, 1, 0.2);"></div>
@@ -347,47 +353,131 @@
                 <p class="mb-6"><strong>Email:</strong> support@nassad.ca</p>
             </div>
 
-            <!-- Form -->
             <!-- Form Container -->
             <form id="orderForm" class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-lg space-y-4">
                 <h2 class="text-2xl font-bold text-center mb-4">Submit Your Order</h2>
 
-                <input name="CustomerName" required placeholder="Company Name"  class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <input name="CustomerPhone" type="tel"
-                       required
-                       placeholder="6470000000"
-                       pattern="[0-9]{10}"
-                       maxlength="10"
-                       inputmode="numeric"
-                       title="Phone number must be exactly 10 digits"  class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <input name="CustomerEmail" required placeholder="Email Address" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <input name="CustomerAddress" required placeholder="your Address" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <input type="url" name="transUrl" required placeholder="Share your URL project : wetransfer, DropBox, OneDrive, GoogleDrive" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input name="CustomerName" required placeholder="Company Name"
+                       class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
 
-                <select name="Trans_categories" required class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Select Service</option>
-                    <option value="small format">Small format printing</option>
-                    <option value="menus">Menus</option>
-                    <option value="brochures">Brochures</option>
-                    <option value="flyers">Flyers</option>
-                    <option value="business card">Business Card</option>
-                    <option value="retail printing">Retail printing</option>
-                    <option value="banners">Banners</option>
-                    <option value="fabric printing">Fabric Printing</option>
-                    <option value="just frame">Indoor Frame (please describe measurements)</option>
-                    <option value="frame fabric">Indoor Frame with Fabric (please describe measurements)</option>
-                    <option value="custom service">Custom Service</option>
-                </select>
+                <input name="CustomerPhone" type="tel" required placeholder="6470000000"
+                       pattern="[0-9]{10}" maxlength="10" inputmode="numeric"
+                       title="Phone number must be exactly 10 digits"
+                       class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
 
-                <textarea name="Trans_description" required placeholder="Project details" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                <input name="CustomerEmail" required placeholder="Email Address"
+                       class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
 
+                <input name="CustomerAddress" required placeholder="Your Address"
+                       class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+                <!-- Service Selection (Checkboxes) -->
+                <div class="w-full p-3 border border-gray-300 rounded focus-within:ring-2 focus-within:ring-blue-500">
+                    <label class="block mb-2 font-semibold">Select Service(s)</label>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="Trans_categories" value="small format" class="form-checkbox h-5 w-5 text-blue-600">
+                            Small format printing
+                        </label>
+
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="Trans_categories" value="menus" class="form-checkbox h-5 w-5 text-blue-600">
+                            Menus
+                        </label>
+
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="Trans_categories" value="brochures" class="form-checkbox h-5 w-5 text-blue-600">
+                            Brochures
+                        </label>
+
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="Trans_categories" value="flyers" class="form-checkbox h-5 w-5 text-blue-600">
+                            Flyers
+                        </label>
+
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="Trans_categories" value="business card" class="form-checkbox h-5 w-5 text-blue-600">
+                            Business Card
+                        </label>
+
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="Trans_categories" value="retail printing" class="form-checkbox h-5 w-5 text-blue-600">
+                            Retail printing
+                        </label>
+
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="Trans_categories" value="banners" class="form-checkbox h-5 w-5 text-blue-600">
+                            Banners
+                        </label>
+
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="Trans_categories" value="fabric printing" class="form-checkbox h-5 w-5 text-blue-600">
+                            Fabric Printing
+                        </label>
+
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="Trans_categories" value="just frame" class="form-checkbox h-5 w-5 text-blue-600">
+                            Indoor Frame (please describe measurements)
+                        </label>
+
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="Trans_categories" value="frame fabric" class="form-checkbox h-5 w-5 text-blue-600">
+                            Indoor Frame with Fabric (please describe measurements)
+                        </label>
+
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="Trans_categories" value="custom service" class="form-checkbox h-5 w-5 text-blue-600">
+                            Custom Service
+                        </label>
+                    </div>
+                    <p id="serviceError" class="mt-2 text-sm text-red-600 hidden">
+                        Please select at least one service.
+                    </p>
+                </div>
+
+
+                <textarea name="Trans_description" required placeholder="Project details"
+                          class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+
+                <!-- Upload Option Toggle -->
+                <div class="flex gap-4 items-center mb-2">
+                    <label class="flex items-center gap-2">
+                        <input type="radio" name="uploadOption" value="url" checked class="form-radio">
+                        Provide URL
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="radio" name="uploadOption" value="file" class="form-radio">
+                        Upload File
+                    </label>
+                </div>
+
+                <!-- URL Input -->
+                <input type="url"
+                       name="TransUrl"
+                       id="urlInput"
+                       placeholder="Share your project URL (WeTransfer, Dropbox, Google Drive)"
+                       class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+                <!-- File Input -->
+                <input type="file"
+                       name="TransFile"
+                       id="fileInput"
+                       accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.zip,.psd,.psb,.ai,.eps,.dwg,.dxf"
+                       class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 hidden" />
+
+                <p id="fileName" class="mt-2 text-sm text-gray-600"></p>
+
+                <!-- Validation message -->
+                <p id="uploadError" class="mt-2 text-sm text-red-600 hidden">
+                    Please provide a URL or upload a file.
+                </p>
                 <!-- Submit Button -->
-                <button type="submit" class="w-full p-3 bg-blue-500 text-white font-semibold rounded hover:bg-blue-600 flex justify-center items-center gap-2">
+                <button type="submit" style="background-color: orangered" class="w-full p-3 bg-blue-500 text-white font-semibold rounded hover:bg-blue-600 flex justify-center items-center gap-2">
                     <span class="btn-text">Send Request</span>
                     <span class="loader hidden border-2 border-white border-t-transparent rounded-full w-5 h-5 animate-spin"></span>
                 </button>
             </form>
-
         </div>
     </section>
     <!-- Footer -->
@@ -397,7 +487,7 @@
                 <div>
                     <img src="~/images/nassad.png" alt="NASS Advertising & Designing" class="h-16 w-30 mb-3" style="background-color: white; border-radius: 20px;">
                     <p class="text-gray-400">
-                     Connecting clients with top printing and design agencies through our innovative marketplace platform.
+                        Connecting clients with top printing and design agencies through our innovative marketplace platform.
                     </p>
                 </div>
 
@@ -409,7 +499,7 @@
                         <button onclick="scrollToSection('about')" class="block text-gray-400 hover:text-[#ff6b35] transition-colors">About</button>
                         <button onclick="scrollToSection('contact')" class="block text-gray-400 hover:text-[#ff6b35] transition-colors">Submit Project</button>
                     </div>
-                
+
                     <h4 class="mb-4">Legal & Privacy</h4>
                     <div class="space-y-4">
                         <a asp-controller="Home" asp-action="Privacy">Privacy Policy</a> |
@@ -421,7 +511,7 @@
                 <div>
                     <h4 class="mb-4">Follow Us</h4>
                     <div class="flex gap-4">
-                    
+
                         <a href="https://www.youtube.com/nassadca" class="bg-white/10 p-3 rounded-lg hover:bg-[#ff6b35] transition-all hover:scale-110 hover:rotate-6">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
@@ -454,85 +544,154 @@
     <div id="toast" class="fixed bottom-6 right-6 hidden bg-white border p-4 rounded shadow">
         <span id="toastMessage"></span>
     </div>
-
-    <!-- ================= SCRIPTS ================= -->
     <script>
-        
+                document.addEventListener("DOMContentLoaded", () => {
 
-                   document.getElementById("orderForm").addEventListener("submit", async e => {
-            e.preventDefault();
+                    /* ================= FILE NAME DISPLAY ================= */
+                    const fileInput = document.getElementById("fileInput");
+                    const fileNameText = document.getElementById("fileName");
 
-            const form = e.target;
-            const submitButton = form.querySelector("button[type='submit']");
-            const btnText = submitButton.querySelector(".btn-text");
-            const loader = submitButton.querySelector(".loader");
+                    fileInput.addEventListener("change", () => {
+                        fileNameText.textContent = fileInput.files.length
+                            ? fileInput.files[0].name
+                            : "";
+                    });
 
-            // Disable button and show loader
-            submitButton.disabled = true;
-            btnText.textContent = "Sending...";
-            loader.classList.remove("hidden");
 
-            const formData = new FormData(form);
+                    /* ================= URL / FILE TOGGLE ================= */
+                    const urlInput = document.getElementById("urlInput");
+                    const uploadRadios = document.querySelectorAll('input[name="uploadOption"]');
 
-            try {
-                const res = await fetch("/api/transactions/receive-order", {
-                    method: "POST",
-                    body: formData
+                    uploadRadios.forEach(radio => {
+                        radio.addEventListener("change", () => {
+                            if (radio.value === "url") {
+                                urlInput.classList.remove("hidden");
+                                fileInput.classList.add("hidden");
+                            } else {
+                                fileInput.classList.remove("hidden");
+                                urlInput.classList.add("hidden");
+                            }
+                        });
+                    });
+
+
+                    /* ================= FORM SUBMIT ================= */
+                    const form = document.getElementById("orderForm");
+                    const errorMsg = document.getElementById("uploadError");
+
+                    form.addEventListener("submit", async (e) => {
+                        e.preventDefault();
+
+                          // ✅ Service validation
+            if (!validateServices()) return;
+
+                        const hasUrl = urlInput.value.trim() !== "";
+                        const hasFile = fileInput.files.length > 0;
+
+                        // ✅ Validate: URL OR File required
+                        if (!hasUrl && !hasFile) {
+                            errorMsg.classList.remove("hidden");
+                            return;
+                        }
+
+                        errorMsg.classList.add("hidden");
+
+                        const submitButton = form.querySelector("button[type='submit']");
+                        const btnText = submitButton.querySelector(".btn-text");
+                        const loader = submitButton.querySelector(".loader");
+
+                        // Disable button & show loader
+                        submitButton.disabled = true;
+                        btnText.textContent = "Sending...";
+                        loader.classList.remove("hidden");
+
+                        const formData = new FormData(form);
+
+                        try {
+                            const res = await fetch("/api/transactions/receive-order", {
+                                method: "POST",
+                                body: formData
+                            });
+
+                            if (!res.ok) throw new Error();
+
+                            showToast("✅ Request sent successfully!");
+                            form.reset();
+                            fileNameText.textContent = "";
+
+                            // Reset to URL mode
+                            urlInput.classList.remove("hidden");
+                            fileInput.classList.add("hidden");
+
+                        } catch {
+                            showToast("❌ Failed to send request");
+                        } finally {
+                            submitButton.disabled = false;
+                            btnText.textContent = "Send Request";
+                            loader.classList.add("hidden");
+                        }
+                    });
+
+
+                    /* ================= MOBILE MENU ================= */
+                    const menuBtn = document.getElementById("menuBtn");
+                    const mobileMenu = document.getElementById("mobileMenu");
+
+                    if (menuBtn && mobileMenu) {
+                        menuBtn.addEventListener("click", () => {
+                            mobileMenu.classList.toggle("hidden");
+                        });
+                    }
+
+
+                    /* ================= CARD HOVER EFFECT ================= */
+                    document.querySelectorAll(".bg-gradient-to-br").forEach(card => {
+                        card.addEventListener("mouseenter", () => {
+                            card.style.transform = "translateY(-5px)";
+                        });
+                        card.addEventListener("mouseleave", () => {
+                            card.style.transform = "translateY(0)";
+                        });
+                    });
+
                 });
 
-                if (!res.ok) throw new Error();
 
-                showToast("✅ Request sent successfully!");
-                form.reset();
-            } catch {
-                showToast("❌ Failed to send request");
-            } finally {
-                // Re-enable button and hide loader
-                submitButton.disabled = false;
-                btnText.textContent = "Send Request";
-                loader.classList.add("hidden");
+                /* ================= TOAST ================= */
+                function showToast(message) {
+                    const toast = document.createElement("div");
+                    toast.textContent = message;
+                    toast.className =
+                        "fixed bottom-5 right-5 bg-gray-800 text-white px-4 py-2 rounded shadow-lg z-50";
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3000);
+                }
+
+
+                /* ================= SCROLL ================= */
+                function scrollToSection(sectionId) {
+                    const el = document.getElementById(sectionId);
+                    if (el) {
+                        el.scrollIntoView({ behavior: "smooth" });
+                    }
+                }
+              /*  ================= Validate at least one service selected ================= */
+                function validateServices() {
+            const services = document.querySelectorAll(
+                'input[name="Trans_categories"]:checked'
+            );
+            const error = document.getElementById("serviceError");
+
+            if (services.length === 0) {
+                error.classList.remove("hidden");
+                return false;
             }
-        });
 
-
-             // Example Toast function
-        function showToast(msg) {
-            const toast = document.createElement("div");
-            toast.textContent = msg;
-            toast.className = "fixed bottom-5 right-5 bg-gray-800 text-white px-4 py-2 rounded shadow-lg";
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+            error.classList.add("hidden");
+            return true;
         }
-
-        //scroll to section when clicked in navbar
-        function scrollToSection(sectionId) {
-            const element = document.getElementById(sectionId);
-            if (element) {
-                element.scrollIntoView({ behavior: "smooth" });
-            }
-        }
-         // Add hover effect to value cards
-        document.querySelectorAll('.bg-gradient-to-br').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-5px)';
-            });
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-            });
-        });
-
-        // menu humburger in mobile mode
-                document.addEventListener("DOMContentLoaded", function () {
-            const menuBtn = document.getElementById("menuBtn");
-            const mobileMenu = document.getElementById("mobileMenu");
-
-            if (!menuBtn || !mobileMenu) return;
-
-            menuBtn.addEventListener("click", () => {
-                mobileMenu.classList.toggle("hidden");
-            });
-        });
     </script>
+
 
 </body>
 </html>
