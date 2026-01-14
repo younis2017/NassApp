@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Nass.Data;
 using Nass.Helpers;
-using Nass.Models;
+using Nass.Domain.Entities;
 using System;
 using System.Threading.Tasks;
 

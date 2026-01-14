@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Nass.Domain.Entities;
 using Nass.Data;
-
 namespace Nass.Controllers
 {
     [Route("api/[controller]")]
@@ -53,7 +53,7 @@ namespace Nass.Controllers
                 {
                     t.Trans_id,
                     CustomerName = t.Customer.CustomerName,
-                    TransDate = t.Trans_date,
+                    TransDate = t.trans_recived_date,
                     t.TransStatus
                 })
                 .ToListAsync();

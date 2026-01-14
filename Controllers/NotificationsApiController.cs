@@ -2,9 +2,10 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Nass.Data;
-using Nass.Models;
-using Nass.Services.Email;
-using Nass.Services.SMS;
+using Nass.Helpers;
+using Nass.Domain.Entities;
+using Nass.Email;
+using Nass.SMS;
 
 namespace Nass.Controllers
 {
@@ -23,7 +24,9 @@ namespace Nass.Controllers
             _emailService = emailService;
             _sms = sms;
         }
+        //Get DateTime by Eastern Standard
 
+        DateTime tz = DateTimeHelper.NowET();
         // =========================
         // GET: All unconfirmed transactions (blind orders)
         // =========================
@@ -83,7 +86,7 @@ namespace Nass.Controllers
                     transaction.TransStatus = 1;
                     transaction.Agency_id = agency.AgencyId;
                     transaction.Agency_tenat = agency.AgencyTenet;
-                    transaction.trans_recived_date = DateTime.UtcNow;
+                    transaction.trans_recived_date = tz;
 
                     // 2️⃣ Update NotificationRecipients
                     var recipients = await _context.NotificationRecipients
@@ -96,7 +99,7 @@ namespace Nass.Controllers
                         {
                             r.Status = "Confirmed";
                             r.IsRead = true;
-                            r.ReadAt = DateTime.UtcNow;
+                            r.ReadAt = tz;
                         }
                         else
                         {
@@ -147,7 +150,7 @@ body {{ font-family: Arial; background:#f4f6f8; padding:20px; }}
 <h3>📦 Order Details</h3>
 <p><strong>Service:</strong> {transaction.Trans_categories}</p>
 <p><strong>Description:</strong><br />{transaction.Trans_description}</p>
-<p><strong>Confirmed On:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm}</p>
+<p><strong>Confirmed On:</strong> {tz:yyyy-MM-dd HH:mm}</p>
 </div>
 
 <p>The agency will contact you shortly to proceed.</p>
@@ -157,7 +160,7 @@ body {{ font-family: Arial; background:#f4f6f8; padding:20px; }}
 
 <div class='footer'>
 support@nassad.ca | +1 (647) 913-1282<br/>
-© {DateTime.UtcNow.Year} Nassad
+© {tz.Year} Nassad
 </div>
 </div>
 
@@ -211,7 +214,7 @@ support@nassad.ca | +1 (647) 913-1282<br/>
             // Only update this agency's row
             recipient.Status = "Rejected";
             recipient.IsRead = true;
-            recipient.ReadAt = DateTime.UtcNow;
+            recipient.ReadAt = tz;
 
             await _context.SaveChangesAsync();
             return Ok(new { message = $"Transaction rejected by {agency.AgencyName}" });

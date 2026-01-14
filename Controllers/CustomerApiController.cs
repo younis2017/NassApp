@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Nass.Data;
-using Nass.Models;
+using Nass.Domain.Entities;
 
 namespace Nass.Controllers
 {

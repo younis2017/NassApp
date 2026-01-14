@@ -106,15 +106,22 @@ function initNotifications() {
             transactions.forEach(t => {
                 const li = document.createElement("li");
                 li.className = "dropdown-item p-2 border-bottom";
+
                 li.innerHTML = `
-                    <strong>${t.trans_categories}</strong>
-                    <small class="text-muted d-block">${new Date(t.trans_date).toLocaleString()}</small>
-                    <div>${t.trans_description}</div>
-                    <div class="mt-2">
-                        <button class="btn btn-sm btn-success me-1" data-id="${t.trans_id}" data-action="confirm">✔ Confirm</button>
-                        <button class="btn btn-sm btn-danger" data-id="${t.trans_id}" data-action="reject">✖ Reject</button>
-                    </div>
-                `;
+        <strong>${t.trans_categories}</strong>
+        <small class="text-muted d-block">${new Date(t.trans_date).toLocaleString()}</small>
+        <div>${t.trans_description}</div>
+        <div class="mt-2 d-flex gap-1">
+            <button class="btn btn-sm btn-success flex items-center gap-2" data-id="${t.trans_id}" data-action="confirm">
+                <span class="btn-text">✔ Confirm</span>
+                <span class="loader hidden"></span>
+            </button>
+            <button class="btn btn-sm btn-danger flex items-center gap-2" data-id="${t.trans_id}" data-action="reject">
+                <span class="btn-text">✖ Reject</span>
+                <span class="loader hidden"></span>
+            </button>
+        </div>
+    `;
                 notificationList.appendChild(li);
             });
 
@@ -130,28 +137,53 @@ function initNotifications() {
         loadOrders(currentPage); // Live Orders update
     });
 
-    // Confirm / Reject
-    notificationList.addEventListener("click", async e => {
-        if (e.target.tagName !== "BUTTON") return;
-        const id = e.target.dataset.id;
-        const action = e.target.dataset.action;
-        const url = action === "confirm"
-            ? `/api/notifications/confirm/${id}?tenant=${tenant}`
-            : `/api/notifications/reject/${id}?tenant=${tenant}`;
+    // Confirm / Reject with loader
+notificationList.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
 
-        try {
-            const res = await fetch(url, { method: "PUT" });
-            if (!res.ok) {
-                const errData = await res.json();
-                alert(errData.message || "Action failed");
-                return;
-            }
-            e.target.closest("li").remove();
-            notificationCount.textContent = notificationList.children.length;
-            loadAgencyKpis();
-            loadOrders(currentPage);
-        } catch (err) { console.error(err); alert("Server error"); }
-    });
+    const id = btn.dataset.id;
+    const action = btn.dataset.action;
+
+    const btnText = btn.querySelector(".btn-text");
+    const loader = btn.querySelector(".loader");
+
+    const url = action === "confirm"
+        ? `/api/notifications/confirm/${id}?tenant=${tenant}`
+        : `/api/notifications/reject/${id}?tenant=${tenant}`;
+
+    // ⛔ Prevent double click
+    btn.disabled = true;
+    btnText.textContent = "Processing...";
+    loader.classList.remove("hidden");
+
+    try {
+        const res = await fetch(url, { method: "PUT" });
+
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.message || "Action failed");
+        }
+
+        // ✅ Success → remove notification
+        btn.closest("li").remove();
+        notificationCount.textContent = notificationList.children.length;
+
+        // Refresh dashboard
+        loadAgencyKpis();
+        loadOrders(currentPage);
+
+    } catch (err) {
+        console.error(err);
+        alert(err.message);
+
+        // 🔄 Restore button on failure
+        btn.disabled = false;
+        btnText.textContent = action === "confirm" ? "Confirm" : "Reject";
+        loader.classList.add("hidden");
+    }
+});
+
 
     setInterval(() => renderNotifications(false), 15000);
 }

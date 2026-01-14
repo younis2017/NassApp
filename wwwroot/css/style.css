@@ -88,7 +88,7 @@ header .container {
   content: '';
   position: absolute;
   inset: 0;
-  background: url('https://i.pinimg.com/originals/da/fa/c8/dafac8aa5ddb2c0c7abf16da9f78c789.gif') center/cover no-repeat;
+  background: url('https://cdnl.iconscout.com/lottie/premium/thumb/gradient-background-animation-gif-download-8227533.gif");') center/cover no-repeat;
   filter: brightness(0.6);
   z-index: -2;
 }

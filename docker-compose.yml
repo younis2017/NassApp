@@ -1,0 +1,26 @@
+services:
+  nass-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nass
+    ports:
+      - "8080:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=db;Database=NassDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;
+    depends_on:
+      - db
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: nass-db
+    environment:
+      SA_PASSWORD: "YourStrong!Passw0rd"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - nass-db-data:/var/opt/mssql
+
+volumes:
+  nass-db-data:

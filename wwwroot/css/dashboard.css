@@ -13,6 +13,7 @@
     width: 220px;
     background-color: #6610f2;
     color: white;
+    display: flex;
     flex-direction: column;
     transition: transform 0.3s ease-in-out;
 }
@@ -22,11 +23,19 @@
         text-decoration: none;
         padding: 15px 20px;
         display: block;
+        transition: background 0.3s;
     }
 
         .sidebar a:hover {
             background-color: #5208c0;
         }
+
+    .sidebar .role-header {
+        text-align: center;
+        padding: 20px;
+        font-weight: bold;
+        background-color: #5208c0;
+    }
 
 .main-content {
     flex-grow: 1;
@@ -44,13 +53,28 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.section {
-    display: none;
+    .top-navbar .logo {
+        font-weight: 600;
+        font-size: 1.2rem;
+        color: #6610f2;
+    }
+
+.notifications {
+    position: relative;
+    cursor: pointer;
 }
 
-    .section.active {
-        display: block;
+    .notifications .badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        transform: translate(50%, -50%);
     }
+
+.content-area {
+    flex-grow: 1;
+    padding: 2rem;
+}
 
 @media (max-width: 768px) {
     .sidebar {
@@ -65,4 +89,30 @@
         .sidebar.show {
             transform: translateX(0);
         }
+}
+
+.section {
+    display: none;
+}
+
+    .section.active {
+        display: block;
+    }
+.loader {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.hidden {
+    display: none;
 }
